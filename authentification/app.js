@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt')
+const cors = require('cors')
 const app = express();
 
 
@@ -12,6 +13,9 @@ const sqlite3 = require('sqlite3').verbose();
 app.use(bodyParser.urlencoded({
     extended: true
 }));
+
+app.use(cors())
+
 try {
     app.use(bodyParser.json());
 } catch {
@@ -46,7 +50,7 @@ app.post('/register', async (req, res) => {
         if(err){
             console.error('Une erreure est survenue lors du hachage. Veuillez contacter l\'administrateur. Error :' + err);
             res.status(401);
-            res.send('Une erreure est survenue lors du hachage. Veuillez contacter l\'administrateur.')
+            res.send({ status: "Erreur", message: 'Une erreure est survenue lors du hachage. Veuillez contacter l\'administrateur.'})
             return ;
         }
         let sql = req.db.prepare("INSERT INTO compte VALUES (?, ?)", [identifiant, hash])
@@ -54,12 +58,12 @@ app.post('/register', async (req, res) => {
             if (err){
                 console.error('Une erreure est survenue lors de l\'a création du compte : ' + err);
                 res.status(401);
-                res.send('Une erreure est survenue lors de l\'a création du compte');
+                res.send({ status: "Erreur", message: 'Une erreure est survenue lors de l\'a création du compte'});
                 return ;
             }
             console.log("Compte enregistré");
             sql.finalize();  
-            res.send('Compte enregistré')
+            res.send({ status: "Succès", message: 'Compte enregistré' })
         })
     })
 })
@@ -74,13 +78,13 @@ app.post('/login', (req, res) => {
         if (err) {
             console.error('Erreur sql :', err);
             res.status(400);
-            res.send('Erreur sql')
+            res.send({ status: "Erreur", message: 'Erreur sql' })
             return ;
         }
         if(!result.motdepasse) {
             console.error("Compte inconnu (ou en double, c'est un problème)");
             res.status(401);
-            res.send("Compte inconnu (ou en double, c'est un problème)")
+            res.send({ status: "Erreur", message: "Compte inconnu (ou en double, c'est un problème)" })
             return ;
         }
         const row = result.motdepasse;
@@ -103,7 +107,7 @@ app.post('/login', (req, res) => {
 app.get('/logout', (req, res) => {
     const token = req.header.token
     console.log("logout")
-    res.send("logout")
+    res.send({ status: "Succès", message: "logout" })
 })
 
 // Vérification du jeton. Méthode POST

@@ -11,7 +11,7 @@ const api = async (port: number, method: 'POST' | 'GET' | 'PATCH', action: strin
         return responseJson;
     }
     else {
-        throw new Error(`${responseJson.message}`);
+        throw new Error(responseJson.message);
     }
 };
 export default api;
