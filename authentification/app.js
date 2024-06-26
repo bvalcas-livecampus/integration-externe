@@ -101,17 +101,19 @@ app.post('/login', (req, res) => {
 
 // Déconnexion. Méthode GET
 app.get('/logout', (req, res) => {
+    const token = req.header.token
     console.log("logout")
     res.send("logout")
 })
 
 // Vérification du jeton. Méthode POST
 app.post('/verify', (req, res) => {
-
+    const token = req.header.token;
 })
 
 // Modification des données d'un compte. Méthode PATCH
 app.patch('/update', (req, res) => {
+    const id = req.query.id;
 })
 
 
