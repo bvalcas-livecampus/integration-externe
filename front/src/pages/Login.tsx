@@ -39,7 +39,7 @@ const Login = () => {
             identifiant: identifier,
             motdepasse: password
         };
-        const apiCall = isRegistration ? api(3000, "POST","register", data) : api(3000, "POST","login", data);
+        const apiCall = isRegistration ? api.auth(3000, "POST","register", data) : api.auth(3000, "POST","login", data);
 
         apiCall
             .then((jeton: string) => {

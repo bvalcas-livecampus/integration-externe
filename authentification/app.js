@@ -4,7 +4,6 @@ const bcrypt = require('bcrypt')
 const cors = require('cors')
 const app = express();
 
-
 const sqlite3 = require('sqlite3').verbose();
 
 // Connexion à la base de donnée.

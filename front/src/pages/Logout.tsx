@@ -8,9 +8,9 @@ const Logout = () => {
 
     useEffect(() => {
         const token = localStorage.getItem('token');
-        api(3000, "POST","verify", {jeton: token})
+        api.auth(3000, "POST","verify", {jeton: token})
             .then(response => {
-                api(3000, "GET","logout", {token})
+                api.auth(3000, "GET","logout", {token})
                     .then(response => {
                         // On supprime le token du localStorage
                         localStorage.removeItem("token");
