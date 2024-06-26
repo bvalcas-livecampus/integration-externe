@@ -42,7 +42,7 @@ const Account = () => {
         // On vérifie si un utilisateur est déjà connecté
         if (token) {
             setIsLoading(true)
-            api(3000, "POST", "verify", {jeton: token})
+            api.auth(3000, "POST", "verify", {jeton: token})
                 .then(response => {
                     // L'utilisateur est connecté, on récupère l'id de l'utilisateur
                     if (response.id) {
@@ -61,7 +61,7 @@ const Account = () => {
                     setIsLoading(false)
                 });
         } else {
-            navigate("/");
+            //navigate("/");
         }
     }, []);
 
@@ -78,7 +78,7 @@ const Account = () => {
                 global: "Vous devez d'abord corriger les erreurs avant de soumettre le formulaire"
             });
             return;
-        } else if (lastPassword === null || lastPassword.trim().length === 0) {
+        } else if (fieldName === "password" && lastPassword === null || lastPassword.trim().length === 0) {
             setError({
                 ...error,
                 global: "Vous devez entrer votre ancien mot de passe avant de changer votre mot de passe"
@@ -93,10 +93,10 @@ const Account = () => {
 
         setIsLoading(true);
         // On test d'abord l'ancien mot de passe avant de pouvoir le changer
-        api(3000, "POST", "login", {identifiant: customer.current.identifier, motdepasse: lastPassword})
+        api.auth(3000, "POST", "login", {identifiant: customer.current.identifier, motdepasse: lastPassword})
             .then(() => {
                 // On modifie le mot de passe
-                api(3000, "PATCH", "update", body, `?id=${customer.current.id}`)
+                api.auth(3000, "PATCH", "update", body, `?id=${customer.current.id}`)
                     .then(response => {
                         successCallback();
                     })

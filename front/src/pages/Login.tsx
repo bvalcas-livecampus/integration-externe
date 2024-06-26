@@ -61,7 +61,7 @@ const Login = () => {
         const token = localStorage.getItem('token');
         // On vérifie si un utilisateur est déjà connecté
         if (token) {
-            api(3000, "POST", "verify", {jeton: token})
+            api.auth(3000, "POST", "verify", {jeton: token})
                 .then(response => {
                     // L'utilisateur est connecté, on le redirige vers la page d'accueil
                     navigate("/");
