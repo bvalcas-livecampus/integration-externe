@@ -9,35 +9,34 @@ const sqlite3 = require('sqlite3').verbose();
 // Connexion à la base de donnée.
 
 
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 try {
-    app.use(bodyParser.urlencoded({
-        extended: true
-    }));
     app.use(bodyParser.json());
-    app.use((req, res, next) => {
-        // S'il y a déjà une variable req.db, on continue
-        // Il n'y a pas de raison.
-        if(req.db) {
-            next();
-        } else {
-            req.db = new sqlite3.Database('compte_itineraire');
-
-            
-            // Creation de la table compte si elle n'existe pas
-            req.db.run("CREATE TABLE IF NOT EXISTS compte (\
-                identifiant VARCHAR(100) NOT NULL, \
-                motdepasse VARCHAR(255) NOT NULL, \
-                PRIMARY KEY (identifiant) )");
-        
-            next();
-        }
-    });
 } catch {
     app.status(400)
     res.send({ statut: "Erreur", message: "JSON incorrect" });
     return ;
 }
-  
+app.use((req, res, next) => {
+    // S'il y a déjà une variable req.db, on continue
+    // Il n'y a pas de raison.
+    if(req.db) {
+        next();
+    } else {
+        req.db = new sqlite3.Database('compte_itineraire');
+        
+        // Creation de la table compte si elle n'existe pas
+        req.db.run("CREATE TABLE IF NOT EXISTS compte (\
+            identifiant VARCHAR(100) NOT NULL, \
+            motdepasse VARCHAR(255) NOT NULL, \
+            PRIMARY KEY (identifiant) )");
+    
+        next();
+    }
+});
+
 
 // Création de compte. méthode POST
 app.post('/register', async (req, res) => {
@@ -108,12 +107,12 @@ app.get('/logout', (req, res) => {
 
 // Vérification du jeton. Méthode POST
 app.post('/verify', (req, res) => {
+
 })
 
 // Modification des données d'un compte. Méthode PATCH
 app.patch('/update', (req, res) => {
 })
-
 
 
 var server = app.listen(3000, () => {
