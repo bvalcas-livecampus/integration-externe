@@ -106,9 +106,9 @@ app.post('/login', async (req, res) => {
  *   }>
  */
 app.get('/logout', async (req, res) => {
-    const {jeton} = req.body;
-    if (jeton) {
-        auth("GET", "logout", {jeton})
+    const {token} = req.cookies;
+    if (token) {
+        auth("GET", "logout", {token})
             .then((response) => {
                 res.send(response);
             }).catch((error) => {
@@ -143,6 +143,14 @@ app.post('/verify', async (req, res) => {
     }
 });
 
+async function verify(token) {
+    if (token) {
+        await auth("POST", "verify", {}, "", { token: token })
+    } else {
+        throw new Error("Token manquant")
+    }
+}
+
 /**
  * Cette fonction permet de supprimer un compte en fonction de son identifiant
  * @param id
@@ -152,7 +160,15 @@ app.post('/verify', async (req, res) => {
  *   }>
  */
 app.patch('/update/:id', async (req, res) => {
-    const {token} = req.cookies;
+    try {
+        await verify(token);
+    } catch (e) {
+        res.status(401).send({
+            status: "Erreur",
+            message: e.message
+        });
+        return ;
+    }
     const {identifiant, motdepasse} = req.body;
     const id = req.params.id;
     if (identifiant && id) {
@@ -178,7 +194,6 @@ app.patch('/update/:id', async (req, res) => {
 // Système itinéraires
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 app.use((req, res, next) => {
-    const {token} = req.cookies;
     // S'il y a déjà une variable req.db, on continue
     // Il n'y a pas de raison.
     if (req.db) {
@@ -279,6 +294,16 @@ const openData = async (limit, offset) => {
  */
 app.get('/stations', async (req, res) => {
     const {token} = req.cookies;
+
+    try {
+        await verify(token);
+    } catch (e) {
+        res.status(401).send({
+            status: "Erreur",
+            message: e.message
+        });
+        return ;
+    }
     let allStation = [];
     let offset = 0;
     const limit = 100;
@@ -311,6 +336,17 @@ app.get('/stations', async (req, res) => {
  */
 app.post('/itinerary', async (req, res) => {
     const {token} = req.cookies;
+
+    try {
+        await verify(token);
+    } catch (e) {
+        res.status(401).send({
+            status: "Erreur",
+            message: e.message
+        });
+        return ;
+    }
+
     const {identifier, name, steps} = req.body;
     if (identifier && name && steps) {
         let sql = req.db.prepare("INSERT INTO itinerary (identifier, name) VALUES (?, ?)");
@@ -375,6 +411,17 @@ app.post('/itinerary', async (req, res) => {
  */
 app.get("/itinerary", async (req, res) => {
     const {token} = req.cookies;
+
+    try {
+        await verify(token);
+    } catch (e) {
+        res.status(401).send({
+            status: "Erreur",
+            message: e.message
+        });
+        return ;
+    }
+
     const {identifier} = req.body;
     if (!identifier) {
         res.status(400).send({status: "Erreur", message: "L'identifiant n'est pas défini"});
@@ -451,6 +498,16 @@ app.get("/itinerary", async (req, res) => {
  */
 app.delete("/itinerary/:id", async (req, res) => {
     const {token} = req.cookies;
+
+    try {
+        await verify(token);
+    } catch (e) {
+        res.status(401).send({
+            status: "Erreur",
+            message: e.message
+        });
+        return ;
+    }
     const id = req.params.id;
     if (id) {
         const sql = req.db.prepare("DELETE FROM itinerary WHERE id = ?");

@@ -132,7 +132,7 @@ app.post('/login', (req, res) => {
 
 // Déconnexion. Méthode GET
 app.get('/logout', (req, res) => {
-    const token = req.header.token
+    const token = req.headers.token;
     console.log("logout")
     res.send({ status: "Succès", message: "logout" })
 })
