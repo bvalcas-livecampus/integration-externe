@@ -124,7 +124,7 @@ app.post('/login', (req, res) => {
             process.env.SECRET_KEY
         );
 
-        console.error("JWT Token Créé");
+        console.log("JWT Token Créé");
         res.status(200)
         res.send({ statut: "Succès", message: token });
     })
@@ -148,6 +148,7 @@ app.post('/verify', (req, res) => {
     try {
         expTokenVerification(token)
 
+        console.log("Token vérifié")
         res.status(200)
         res.send({ status: "Succès", message: "Token valide" })
     } catch (err) {
