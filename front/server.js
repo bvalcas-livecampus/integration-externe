@@ -26,7 +26,7 @@ app.listen(3001, () => {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Authentification
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const auth = async (method, action, body, params) => {
+const auth = async (method, action, body, params = "") => {
     const response = await fetch(`http://localhost:3000/${action}${params}`, {
         method,
         headers: {
@@ -49,8 +49,8 @@ app.post('/register', async (req, res) => {
             .then((response) => {
                 res.send(response);
             }).catch((error) => {
-            res.status(401).send({status: "Erreur", message: error.message});
-        });
+                res.status(401).send({status: "Erreur", message: error.message});
+            });
     } else {
         res.status(400).send({status: "Erreur", message: "L'identifiant ou le mot de passe n'est pas défini"});
     }
