@@ -320,10 +320,9 @@ app.get('/stations', async (req, res) => {
             const nextData = await openData(limit, offset);
             allStation = allStation.concat(nextData.results);
         }
-
-        return allStation;
+        res.send(allStation);
     } catch (error) {
-        console.error(error);
+        res.status(500).send({status: "Erreur", message: "Une erreur est survenue lors de la récupération des stations"});
     }
 });
 
