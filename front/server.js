@@ -2,12 +2,14 @@ const express = require('express');
 const app = express();
 const cors = require('cors')
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 
 const sqlite3 = require('sqlite3').verbose();
 
 app.use(bodyParser.urlencoded({
     extended: true
 }));
+app.use(cookieParser());
 
 app.use(cors())
 
@@ -34,11 +36,12 @@ app.listen(3001, () => {
  * @param params
  * @return {Promise<any>}
  */
-const auth = async (method, action, body, params = "") => {
+const auth = async (method, action, body, params = "", headers = {}) => {
     const response = await fetch(`http://localhost:3000/${action}${params}`, {
         method,
         headers: {
             "Content-Type": "application/json",
+            ...headers
         },
         body: JSON.stringify(body),
     });
@@ -124,16 +127,19 @@ app.get('/logout', async (req, res) => {
  *    }>
  */
 app.post('/verify', async (req, res) => {
-    const {jeton} = req.body;
-    if (jeton) {
-        auth("POST", "verify", {jeton})
+    const {token} = req.cookies;
+    
+    if (token) {
+        auth("POST", "verify", {}, "", {
+            token: token
+        })
             .then((response) => {
                 res.send(response);
             }).catch((error) => {
             res.status(401).send({status: "Erreur", message: error.message});
         });
     } else {
-        res.status(401).send({status: "Erreur", message: "Jeton inconnu"});
+        res.status(401).send({status: "Erreur", message: "Le token est manquant"});
     }
 });
 
