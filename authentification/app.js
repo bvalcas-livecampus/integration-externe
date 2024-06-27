@@ -3,6 +3,8 @@ const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt')
 const cors = require('cors')
 const app = express();
+const jwt = require('jsonwebtoken');
+require('dotenv').config()
 
 const sqlite3 = require('sqlite3').verbose();
 
@@ -66,6 +68,23 @@ app.post('/register', async (req, res) => {
     })
 })
 
+function expTokenVerification(jeton) {
+    const token = jwt.verify(jeton, process.env.SECRET_KEY);
+
+    if (!token.iat || !token.exp || !token.identifiant) {
+        throw new Error("Element manquant dans le token");
+    }
+    if (token.iat > Date.now()) {
+        throw new Error("la date de création doit être inférieur à l'heure actuelle");
+    }
+    if (token.exp < Date.now()) {
+        throw new Error("la date d'expiration doit être supérieur à l'heure actuelle");
+    }
+    if (token.iat > token.exp) {
+        throw new Error("la date d'expiration doit être supérieur à la date de création");
+    }
+}
+
 // Connexion. Méthode POST
 app.post('/login', (req, res) => {
     const identifiant = req.body.identifiant;
@@ -94,10 +113,20 @@ app.post('/login', (req, res) => {
             res.send({ statut: "Erreur", message: "Identifiants incorrects" });
             return ;
         }
+        // console.log(`${new Date(Date.now()).toLocaleString()} | ${new Date((Date.now() - (1000 * 60 * 10))).toLocaleString()}`)
+        var token = jwt.sign(
+            // Ceci est le "payload", donc le contenu concret du JWT
+            {
+                identifiant: identifiant,
+                exp: Date.now() + (1000 * 60 * 10) // 10 Minutes avant expiration
+            },
+            // Ceci est la clef secrète
+            process.env.SECRET_KEY
+        );
 
-        console.error("JWT Token");
+        console.error("JWT Token Créé");
         res.status(200)
-        res.send({ statut: "Succès", message: "JWT Token" });
+        res.send({ statut: "Succès", message: token });
     })
 })
 
@@ -110,7 +139,22 @@ app.get('/logout', (req, res) => {
 
 // Vérification du jeton. Méthode POST
 app.post('/verify', (req, res) => {
-    const token = req.header.token;
+    const token = req.headers.token;
+
+    if (!token) {
+        res.status(400)
+        res.send({ statut: "Erreur", message: "Le token doit être fournis" });
+    }
+    try {
+        expTokenVerification(token)
+
+        res.status(200)
+        res.send({ status: "Succès", message: "Token valide" })
+    } catch (err) {
+        console.warn('Token Invalide :', err.message);
+        res.status(401)
+        res.send({ statut: "Erreur", message: `Token Invalide : ${err.message}` });
+    }
 })
 
 // Modification des données d'un compte. Méthode PATCH
