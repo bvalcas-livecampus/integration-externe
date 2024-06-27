@@ -1,4 +1,4 @@
-import Header from './Header';
+import Header from './Header.tsx';
 import { Outlet } from 'react-router-dom';
 import Footer from "./Footer.tsx";
 import {ToastContainer} from "react-toastify";

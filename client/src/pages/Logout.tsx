@@ -8,10 +8,10 @@ const Logout = () => {
 
     useEffect(() => {
         const token = localStorage.getItem('token');
-        api.auth(3000, "POST","verify", {jeton: token})
-            .then(response => {
-                api.auth(3000, "GET","logout", {token})
-                    .then(response => {
+        api.auth(3001, "POST","verify", {jeton: token})
+            .then(() => {
+                api.auth(3001, "GET","logout", {token})
+                    .then(() => {
                         // On supprime le token du localStorage
                         localStorage.removeItem("token");
                         // On redirige l'utilisateur vers la page d'accueil

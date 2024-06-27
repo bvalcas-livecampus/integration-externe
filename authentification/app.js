@@ -8,7 +8,6 @@ const sqlite3 = require('sqlite3').verbose();
 
 // Connexion à la base de donnée.
 
-
 app.use(bodyParser.urlencoded({
     extended: true
 }));

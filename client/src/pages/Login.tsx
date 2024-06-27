@@ -39,7 +39,7 @@ const Login = () => {
             identifiant: identifier,
             motdepasse: password
         };
-        const apiCall = isRegistration ? api.auth(3000, "POST","register", data) : api.auth(3000, "POST","login", data);
+        const apiCall = isRegistration ? api.auth(3001, "POST","register", data) : api.auth(3001, "POST","login", data);
 
         apiCall
             .then((jeton: string) => {
@@ -61,7 +61,7 @@ const Login = () => {
         const token = localStorage.getItem('token');
         // On vérifie si un utilisateur est déjà connecté
         if (token) {
-            api.auth(3000, "POST", "verify", {jeton: token})
+            api.auth(3001, "POST", "verify", {jeton: token})
                 .then(response => {
                     // L'utilisateur est connecté, on le redirige vers la page d'accueil
                     navigate("/");
