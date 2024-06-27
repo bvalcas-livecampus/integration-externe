@@ -26,7 +26,15 @@ app.listen(3001, () => {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Authentification
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const auth = async (method, action, body, params) => {
+/**
+ * Cette fonction permet de faire une requête au serveur d'authentification
+ * @param method 'POST' | 'GET' | 'PATCH'
+ * @param action 'register' | 'login' | 'logout' | 'verify' | 'update'
+ * @param body
+ * @param params
+ * @return {Promise<any>}
+ */
+const auth = async (method, action, body, params = "") => {
     const response = await fetch(`http://localhost:3000/${action}${params}`, {
         method,
         headers: {
@@ -42,6 +50,13 @@ const auth = async (method, action, body, params) => {
     }
 }
 
+/**
+ * Cette fonction permet de créer un compte
+ * @return {Promise<{
+ *  status: string,
+ *  message: string
+ *  }>
+ */
 app.post('/register', async (req, res) => {
     const {identifiant, motdepasse} = req.body;
     if (identifiant && motdepasse) {
@@ -56,6 +71,16 @@ app.post('/register', async (req, res) => {
     }
 })
 
+/**
+ * Cette fonction permet de connecter un utilisateur
+ * @return {Promise<{
+ *   status: string,
+ *   jeton: string
+ *   } | {
+ *       status: string,
+ *       message: string
+ *   }>
+ */
 app.post('/login', async (req, res) => {
     const {identifiant, motdepasse} = req.body;
     if (identifiant && motdepasse) {
@@ -70,6 +95,13 @@ app.post('/login', async (req, res) => {
     }
 });
 
+/**
+ * Cette fonction permet de déconnecter un utilisateur
+ * @return {Promise<{
+ *   status: string,
+ *   message: string
+ *   }>
+ */
 app.get('/logout', async (req, res) => {
     const {jeton} = req.body;
     if (jeton) {
@@ -84,6 +116,13 @@ app.get('/logout', async (req, res) => {
     }
 });
 
+/**
+ * Cette fonction permet de vérifier un jeton
+ * @return {Promise<{
+ *    status: string,
+ *    message: string
+ *    }>
+ */
 app.post('/verify', async (req, res) => {
     const {jeton} = req.body;
     if (jeton) {
@@ -98,6 +137,14 @@ app.post('/verify', async (req, res) => {
     }
 });
 
+/**
+ * Cette fonction permet de supprimer un compte en fonction de son identifiant
+ * @param id
+ * @return {Promise<{
+ *   status: string,
+ *   message: string
+ *   }>
+ */
 app.patch('/update/:id', async (req, res) => {
     const {identifiant, motdepasse} = req.body;
     const id = req.params.id;
@@ -151,6 +198,108 @@ app.use((req, res, next) => {
     }
 });
 
+/**
+ * Cette fonction permet de récupérer les données de l'api open data
+ * @param limit {number}
+ * @param offset {number}
+ * @return {Promise<
+ *  {
+ *   total_count: number,
+ *   results: [
+ *       {
+ *          stationcode: string,
+ *          name: string,
+ *          is_installed: string,
+ *          capacity: number,
+ *          numdocksavailable: number,
+ *          numbikesavailable: number,
+ *          mechanical: number,
+ *          ebike: number,
+ *          is_renting: string,
+ *          is_returning: string,
+ *          duedate: Date,
+ *          coodonnees_geo: {
+ *              lon: number,
+ *              lat: number
+ *          },
+ *          nom_arrondissement_communes: string,
+ *          code_insee_commune: string
+ *       }
+ *   ]
+ *  } | Error>
+ */
+const openData = async (limit, offset) => {
+    const response = await fetch(`https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/velib-disponibilite-en-temps-reel/records?limit=${limit}&offset=${offset}`, {
+        method: "GET"
+    });
+    if (response.ok) {
+        const responseJson = await response.json();
+        return responseJson;
+    }
+    else {
+        throw new Error(responseJson.message);
+    }
+}
+
+/**
+ * Cette fonction permet de récupérer toutes les stations de vélib
+ * @return {Promise<
+ *  {
+ *   total_count: number,
+ *   results: [
+ *       {
+ *          stationcode: string,
+ *          name: string,
+ *          is_installed: string,
+ *          capacity: number,
+ *          numdocksavailable: number,
+ *          numbikesavailable: number,
+ *          mechanical: number,
+ *          ebike: number,
+ *          is_renting: string,
+ *          is_returning: string,
+ *          duedate: Date,
+ *          coodonnees_geo: {
+ *              lon: number,
+ *              lat: number
+ *          },
+ *          nom_arrondissement_communes: string,
+ *          code_insee_commune: string
+ *       }
+ *   ]
+ *  }>
+ */
+app.get('/stations', async (req, res) => {
+    let allStation = [];
+    let offset = 0;
+    const limit = 100;
+    let total_count = 0;
+
+    try {
+        // On récupère d'abord le nombre de stations
+        const initialData = await openData(limit, offset);
+        total_count = initialData.total_count;
+        allStation = initialData.results;
+        // La limite de l'api est fixé à 100, on doit donc faire plusieurs requêtes pour récupérer toutes les stations
+        while (allStation.length < total_count) {
+            offset += limit;
+            const nextData = await openData(limit, offset);
+            allStation = allStation.concat(nextData.results);
+        }
+
+        return allStation;
+    } catch (error) {
+        console.error(error);
+    }
+});
+
+/**
+ * Cette fonction permet de créer un itinéraire
+ * @return {Promise<{
+ *    status: string,
+ *    message: string
+ *    }>
+ */
 app.post('/itinerary', async (req, res) => {
     const {identifier, name, steps} = req.body;
     if (identifier && name && steps) {
@@ -192,71 +341,113 @@ app.post('/itinerary', async (req, res) => {
     }
 });
 
+/**
+ * Cette fonction permet de récupérer un itinéraire en fonction de son identifiant
+ * @return {Promise<{
+ *     status: string,
+ *     itinerary: {
+ *     identifier: string,
+ *     name: string,
+ *     steps: [
+ *         {
+ *             lon: number,
+ *             lat: number,
+ *             route_index: number,
+ *             address: string
+ *         }
+ *     ]
+ * } |
+ *  {
+ *      status: string,
+ *      message: string
+ *  }
+ * >}
+ */
 app.get("/itinerary", async (req, res) => {
     const {identifier} = req.body;
-    if (identifier) {
-        const sql = `
-            SELECT it.id AS itinerary_id,
-                   it.identifier,
-                   it.name,
-                   ir.id AS step_id,
-                   ir.lon,
-                   ir.lat,
-                   ir.route_index
-            FROM itinerary it
-                     LEFT JOIN
-                 itinerary_route ir ON it.id = ir.itinerary_id
-            WHERE it.identifier = ?
-        `;
-        req.db.all(sql, [identifier], (err, rows) => {
-            if (err) {
-                res.status(400).send({
-                    status: "Erreur",
-                    message: "Une erreur est survenue lors de la récupération des itinéraires"
-                });
-                return;
-            }
-            const itinerary = {};
-            for (const row of rows) {
-                if (!itinerary[row.identifier]) {
-                    itinerary[row.identifier] = {
-                        name: row.name,
-                        steps: [],
-                    };
-                } else {
-                    fetch(`https://api-adresse.data.gouv.fr/reverse/?lon=${row.lon}&lat=${row.lat}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.features.length > 0) {
-                                const address = data.features[0].properties.label;
-                                itinerary[row.identifier].steps.push({
-                                    id: row.step_id,
-                                    lon: row.lon,
-                                    lat: row.lat,
-                                    route_index: row.route_index,
-                                    address,
-                                });
-                            }
-                        })
-                        .catch(error => {
-                            console.error(error);
-                        });
+    if (!identifier) {
+        res.status(400).send({status: "Erreur", message: "L'identifiant n'est pas défini"});
+        return;
+    }
+
+    const sql = `
+        SELECT it.id AS itinerary_id,
+               it.identifier,
+               it.name,
+               ir.id AS step_id,
+               ir.lon,
+               ir.lat,
+               ir.route_index
+        FROM itinerary it
+                 LEFT JOIN
+             itinerary_route ir ON it.id = ir.itinerary_id
+        WHERE it.identifier = ?
+    `;
+
+    try {
+        const rows = await new Promise((resolve, reject) => {
+            req.db.all(sql, [identifier], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+
+        if (rows.length === 0) {
+            res.status(404).send({status: "Erreur", message: "Aucun itinéraire trouvé pour cet identifiant"});
+            return;
+        }
+
+        let itinerary = {
+            identifier: rows[0].identifier,
+            name: rows[0].name,
+            steps: [],
+        };
+
+        for (const row of rows) {
+            const response = await fetch(`https://api-adresse.data.gouv.fr/reverse/?lon=${row.lon}&lat=${row.lat}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.features.length > 0) {
+                    const address = data.features[0].properties.label;
+                    itinerary.steps.push({
+                        lon: row.lon,
+                        lat: row.lat,
+                        route_index: row.route_index,
+                        address,
+                    });
                 }
             }
-            res.send({status: "Succès", itinerary});
+        }
+
+        res.send({status: "Succès", itinerary});
+
+    } catch (error) {
+        console.error(error);
+        res.status(400).send({
+            status: "Erreur",
+            message: "Une erreur est survenue lors de la récupération des itinéraires"
         });
-    } else {
-        res.status(400).send({status: "Erreur", message: "L'identifiant n'est pas défini"});
     }
 });
 
+/**
+ * Cette fonction permet de supprimer un itinéraire en fonction de son identifiant
+ * @param id
+ * @return {Promise<{
+ *    status: string,
+ *    message: string
+ *    }>
+ */
 app.delete("/itinerary/:id", async (req, res) => {
-    const id = req.body.params;
+    const id = req.params.id;
     if (id) {
         const sql = req.db.prepare("DELETE FROM itinerary WHERE id = ?");
         sql.run([id], (err) => {
             if (err) {
-                res.status(400).send({status: "Erreur", message: "Une erreur est survenue lors de la suppression de l'itinéraire"});
+                res.status(400).send({
+                    status: "Erreur",
+                    message: "Une erreur est survenue lors de la suppression de l'itinéraire"
+                });
                 return;
             }
             sql.finalize();
