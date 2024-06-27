@@ -1,6 +1,10 @@
 #map-all-stations {
-    height: 400px; /* ou toute autre hauteur souhaitée */
-    max-height: 80%; /* ou toute autre hauteur souhaitée */
-    width: 400px;
+    position: absolute !important;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 600px;
+    max-height: 80%;
+    width: 600px;
     max-width: 100%;
 }
