@@ -2,12 +2,14 @@ const express = require('express');
 const app = express();
 const cors = require('cors')
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 
 const sqlite3 = require('sqlite3').verbose();
 
 app.use(bodyParser.urlencoded({
     extended: true
 }));
+app.use(cookieParser());
 
 app.use(cors())
 
@@ -34,11 +36,12 @@ app.listen(3001, () => {
  * @param params
  * @return {Promise<any>}
  */
-const auth = async (method, action, body, params = "") => {
+const auth = async (method, action, body, params = "", headers = {}) => {
     const response = await fetch(`http://localhost:3000/${action}${params}`, {
         method,
         headers: {
             "Content-Type": "application/json",
+            ...headers
         },
         body: JSON.stringify(body),
     });
@@ -103,9 +106,9 @@ app.post('/login', async (req, res) => {
  *   }>
  */
 app.get('/logout', async (req, res) => {
-    const {jeton} = req.body;
-    if (jeton) {
-        auth("GET", "logout", {jeton})
+    const {token} = req.cookies;
+    if (token) {
+        auth("GET", "logout", {token})
             .then((response) => {
                 res.send(response);
             }).catch((error) => {
@@ -124,18 +127,29 @@ app.get('/logout', async (req, res) => {
  *    }>
  */
 app.post('/verify', async (req, res) => {
-    const {jeton} = req.body;
-    if (jeton) {
-        auth("POST", "verify", {jeton})
+    const {token} = req.cookies;
+    
+    if (token) {
+        auth("POST", "verify", {}, "", {
+            token: token
+        })
             .then((response) => {
                 res.send(response);
             }).catch((error) => {
             res.status(401).send({status: "Erreur", message: error.message});
         });
     } else {
-        res.status(401).send({status: "Erreur", message: "Jeton inconnu"});
+        res.status(401).send({status: "Erreur", message: "Le token est manquant"});
     }
 });
+
+async function verify(token) {
+    if (token) {
+        await auth("POST", "verify", {}, "", { token: token })
+    } else {
+        throw new Error("Token manquant")
+    }
+}
 
 /**
  * Cette fonction permet de supprimer un compte en fonction de son identifiant
@@ -146,6 +160,15 @@ app.post('/verify', async (req, res) => {
  *   }>
  */
 app.patch('/update/:id', async (req, res) => {
+    try {
+        await verify(token);
+    } catch (e) {
+        res.status(401).send({
+            status: "Erreur",
+            message: e.message
+        });
+        return ;
+    }
     const {identifiant, motdepasse} = req.body;
     const id = req.params.id;
     if (identifiant && id) {
@@ -270,6 +293,17 @@ const openData = async (limit, offset) => {
  *  }>
  */
 app.get('/stations', async (req, res) => {
+    const {token} = req.cookies;
+
+    try {
+        await verify(token);
+    } catch (e) {
+        res.status(401).send({
+            status: "Erreur",
+            message: e.message
+        });
+        return ;
+    }
     let allStation = [];
     let offset = 0;
     const limit = 100;
@@ -301,6 +335,18 @@ app.get('/stations', async (req, res) => {
  *    }>
  */
 app.post('/itinerary', async (req, res) => {
+    const {token} = req.cookies;
+
+    try {
+        await verify(token);
+    } catch (e) {
+        res.status(401).send({
+            status: "Erreur",
+            message: e.message
+        });
+        return ;
+    }
+
     const {identifier, name, steps} = req.body;
     if (identifier && name && steps) {
         let sql = req.db.prepare("INSERT INTO itinerary (identifier, name) VALUES (?, ?)");
@@ -364,6 +410,18 @@ app.post('/itinerary', async (req, res) => {
  * >}
  */
 app.get("/itinerary", async (req, res) => {
+    const {token} = req.cookies;
+
+    try {
+        await verify(token);
+    } catch (e) {
+        res.status(401).send({
+            status: "Erreur",
+            message: e.message
+        });
+        return ;
+    }
+
     const {identifier} = req.body;
     if (!identifier) {
         res.status(400).send({status: "Erreur", message: "L'identifiant n'est pas défini"});
@@ -439,6 +497,17 @@ app.get("/itinerary", async (req, res) => {
  *    }>
  */
 app.delete("/itinerary/:id", async (req, res) => {
+    const {token} = req.cookies;
+
+    try {
+        await verify(token);
+    } catch (e) {
+        res.status(401).send({
+            status: "Erreur",
+            message: e.message
+        });
+        return ;
+    }
     const id = req.params.id;
     if (id) {
         const sql = req.db.prepare("DELETE FROM itinerary WHERE id = ?");
