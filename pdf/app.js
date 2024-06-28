@@ -116,8 +116,7 @@ app.post('/itinerary', async (req, res) => {
     
     let content = "<h1>" + name + "</h1>"
 
-    res.status(204);
-    res.send();
+    res.status(204).send({statut: "Succès", message: ''});
     
     await Promise.all(points.map( async (coordinates) => {
         const info = await api_adresse(coordinates["lon"], coordinates['lat'])
@@ -140,7 +139,7 @@ app.post('/itinerary', async (req, res) => {
         let sql = req.db.prepare("UPDATE pdf set status = 'Error' WHERE id_itineraire = ?", [itinerary])
         sql.run((err) => {
             if (err){
-                console.error('Une erreure est survenue lors de la maj du status du pdf dans la bdd : ' + err);
+                console.error('Une erreur est survenue lors de la maj du status du pdf dans la bdd : ' + err);
                 return ;
             }
             console.log("Status du pdf mis à jour");
