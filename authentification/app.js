@@ -228,7 +228,6 @@ app.get('/logout', (req, res) => {
  */
 app.post('/verify', (req, res) => {
     const token = req.headers.token;
-    console.log(token)
     if (!token) {
         res.status(400).send({statut: "Erreur", message: "Le token doit être fournis"});
     }
