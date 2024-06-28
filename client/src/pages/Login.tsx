@@ -5,7 +5,6 @@ import api from "../helper/api.ts";
 import {useNavigate} from "react-router-dom";
 import Spinner from "../components/Spinner.tsx";
 import {handleIdentifier, handlePassword} from "../helper/customer.ts";
-import {toast} from "react-toastify";
 
 const Login = () => {
     const [identifier, setIdentifier] = useState<string | null>(null);
@@ -39,7 +38,7 @@ const Login = () => {
             identifiant: identifier,
             motdepasse: password
         };
-        const apiCall = isRegistration ? api.auth(3001, "POST","register", data) : api.auth(3001, "POST","login", data);
+        const apiCall = isRegistration ? api( "POST","register", data) : api("POST","login", data);
 
         apiCall
             .then((jeton: string) => {
@@ -61,8 +60,8 @@ const Login = () => {
         const token = localStorage.getItem('token');
         // On vérifie si un utilisateur est déjà connecté
         if (token) {
-            api.auth(3001, "POST", "verify", {jeton: token})
-                .then(response => {
+            api( "POST", "verify", {jeton: token})
+                .then(() => {
                     // L'utilisateur est connecté, on le redirige vers la page d'accueil
                     navigate("/");
                 })

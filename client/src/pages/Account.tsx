@@ -42,7 +42,7 @@ const Account = () => {
         // On vérifie si un utilisateur est déjà connecté
         if (token) {
             setIsLoading(true)
-            api.auth(3001, "POST", "verify", {jeton: token})
+            api( "POST", "verify", {jeton: token})
                 .then(response => {
                     // L'utilisateur est connecté, on récupère l'id de l'utilisateur
                     if (response.id) {
@@ -93,11 +93,11 @@ const Account = () => {
 
         setIsLoading(true);
         // On test d'abord l'ancien mot de passe avant de pouvoir le changer
-        api.auth(3001, "POST", "login", {identifiant: customer.current.identifier, motdepasse: lastPassword})
+        api("POST", "login", {identifiant: customer.current.identifier, motdepasse: lastPassword})
             .then(() => {
                 // On modifie le mot de passe
-                api.auth(3001, "PATCH", "update", body, `?id=${customer.current.id}`)
-                    .then(response => {
+                api( "PATCH", "update", body, `?id=${customer.current.id}`)
+                    .then(() => {
                         successCallback();
                     })
                     .catch(e => {
