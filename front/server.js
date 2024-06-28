@@ -178,7 +178,6 @@ app.post('/verify', async (req, res) => {
     if (token) {
         verify(token)
             .then((response) => {
-                console.log(response);
                 res.status(200).send(response);
             }).catch((error) => {
             res.status(401).send({status: "Erreur", message: error.message});
@@ -337,35 +336,35 @@ const openData = async (limit, offset) => {
 app.get('/stations', async (req, res) => {
     const {token} = req.headers;
 
-    try {
-        await verify(token);
-    } catch (e) {
-        res.status(401).send({status: "Erreur", message: e.message});
-        return;
-    }
-    let allStation = [];
-    let offset = 0;
-    const limit = 100;
-    let total_count = 0;
+    verify(token)
+        .then(async () => {
+            let allStation = [];
+            let offset = 0;
+            const limit = 100;
+            let total_count = 0;
 
-    try {
-        // On récupère d'abord le nombre de stations
-        const initialData = await openData(limit, offset);
-        total_count = initialData.total_count;
-        allStation = initialData.results;
-        // La limite de l'api est fixé à 100, on doit donc faire plusieurs requêtes pour récupérer toutes les stations
-        while (allStation.length < total_count) {
-            offset += limit;
-            const nextData = await openData(limit, offset);
-            allStation = allStation.concat(nextData.results);
-        }
-        res.send(allStation);
-    } catch (error) {
-        res.status(500).send({
-            status: "Erreur",
-            message: "Une erreur est survenue lors de la récupération des stations"
+            try {
+                // On récupère d'abord le nombre de stations
+                const initialData = await openData(limit, offset);
+                total_count = initialData.total_count;
+                allStation = initialData.results;
+                // La limite de l'api est fixé à 100, on doit donc faire plusieurs requêtes pour récupérer toutes les stations
+                while (allStation.length < total_count) {
+                    offset += limit;
+                    const nextData = await openData(limit, offset);
+                    allStation = allStation.concat(nextData.results);
+                }
+                res.send(allStation);
+            } catch (error) {
+                res.status(500).send({
+                    status: "Erreur",
+                    message: "Une erreur est survenue lors de la récupération des stations"
+                });
+            }
+        })
+        .catch((error) => {
+            res.status(401).send({status: "Erreur", message: error.message});
         });
-    }
 });
 
 /**
