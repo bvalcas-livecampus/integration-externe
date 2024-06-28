@@ -116,7 +116,7 @@ app.post('/login', async (req, res) => {
  * @return {Promise<{
  *   status: string,
  *   message: string
- *   }>
+ *   } >
  */
 app.get('/logout', async (req, res) => {
     const {token} = req.headers;
@@ -132,17 +132,64 @@ app.get('/logout', async (req, res) => {
     }
 });
 
+/**
+ * Cette fonction permet de vérifier si un token est valide
+ * @param token {string} Le jeton de l'utilisateur
+ * @throws {Error}
+ * @return {Promise<{
+ *     status: string,
+ *     message: string
+ * } | {
+ *     status: string,
+ *     message: string,
+ *     utilisateur: {
+ *     identifiant: string
+ *     }
+ * }
+ * >}
+ */
 async function verify(token) {
     if (token) {
-        await auth("POST", "verify", {}, "", { token: token })
+        return auth("POST", "verify", {}, "", {token: token})
     } else {
         throw new Error("Token manquant")
     }
 }
 
 /**
+ * Cette route permet de vérifier si un token est valide
+ * @req La requête
+ * @res La réponse
+ * @req.headers.token {string} Le jeton de l'utilisateur
+ * @return {Promise<{
+ *  status: string,
+ *  message: string
+ *  } | {
+ *     status: string,
+ *     message: string,
+ *     utilisateur: {
+ *     identifiant: string
+ *     }
+ * }
+ * >
+ */
+app.post('/verify', async (req, res) => {
+    const {token} = req.headers;
+    if (token) {
+        verify(token)
+            .then((response) => {
+                console.log(response);
+                res.status(200).send(response);
+            }).catch((error) => {
+            res.status(401).send({status: "Erreur", message: error.message});
+        });
+    } else {
+        res.status(401).send({status: "Erreur", message: "Token manquant"});
+    }
+});
+
+/**
  * Cette route permet de supprimer un compte en fonction de son identifiant
->>>>>>> c1fa9225d6b16088ce319c686f2386603c8a8a31
  * @param id
  * @return {Promise<{
  *   status: string,
@@ -164,9 +211,9 @@ app.patch('/update', async (req, res) => {
             .then(() => {
                 let updateData = {};
                 if (field === 'identifiant') {
-                    updateData = { identifiant: value };
+                    updateData = {identifiant: value};
                 } else if (field === 'motdepasse') {
-                    updateData = { motdepasse: value };
+                    updateData = {motdepasse: value};
                 }
                 auth("PATCH", "update", updateData, `?id=${id}`)
                     .then((response) => {
@@ -314,7 +361,10 @@ app.get('/stations', async (req, res) => {
         }
         res.send(allStation);
     } catch (error) {
-        res.status(500).send({status: "Erreur", message: "Une erreur est survenue lors de la récupération des stations"});
+        res.status(500).send({
+            status: "Erreur",
+            message: "Une erreur est survenue lors de la récupération des stations"
+        });
     }
 });
 
@@ -341,7 +391,10 @@ app.post('/itinerary', async (req, res) => {
 
         sql.run([identifier, name], function (err) {
             if (err) {
-                res.status(401).send({status: "Erreur", message: "Une erreur est survenue lors de la création de l'itinéraire"});
+                res.status(401).send({
+                    status: "Erreur",
+                    message: "Une erreur est survenue lors de la création de l'itinéraire"
+                });
                 return;
             }
 
@@ -352,7 +405,10 @@ app.post('/itinerary', async (req, res) => {
                 let stepSql = req.db.prepare("INSERT INTO itinerary_route (itinerary_id, lon, lat) VALUES (?, ?, ?)");
                 stepSql.run([newItineraryId, step.lon, step.lat], (err) => {
                     if (err) {
-                        res.status(401).send({status: "Erreur", message: "Une erreur est survenue lors de la création d'une étape de l'iténiraire'"});
+                        res.status(401).send({
+                            status: "Erreur",
+                            message: "Une erreur est survenue lors de la création d'une étape de l'iténiraire'"
+                        });
                         return;
                     }
                     stepSql.finalize();
@@ -362,7 +418,10 @@ app.post('/itinerary', async (req, res) => {
             res.status(201).send({status: "Succès", message: "Itinéraire enregistré"});
         });
     } else {
-        res.status(400).send({status: "Erreur", message: "L'identifiant, le nom ou les étapes du trajet ne sont pas définis"});
+        res.status(400).send({
+            status: "Erreur",
+            message: "L'identifiant, le nom ou les étapes du trajet ne sont pas définis"
+        });
     }
 });
 
@@ -457,7 +516,10 @@ app.get("/itinerary", async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(400).send({status: "Erreur", message: "Une erreur est survenue lors de la récupération des itinéraires"});
+        res.status(400).send({
+            status: "Erreur",
+            message: "Une erreur est survenue lors de la récupération des itinéraires"
+        });
     }
 });
 
@@ -483,7 +545,10 @@ app.delete("/itinerary/:id", async (req, res) => {
         const sql = req.db.prepare("DELETE FROM itinerary WHERE id = ?");
         sql.run([id], (err) => {
             if (err) {
-                res.status(400).send({status: "Erreur", message: "Une erreur est survenue lors de la suppression de l'itinéraire"});
+                res.status(400).send({
+                    status: "Erreur",
+                    message: "Une erreur est survenue lors de la suppression de l'itinéraire"
+                });
                 return;
             }
             sql.finalize();
