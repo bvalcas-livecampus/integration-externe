@@ -1,11 +1,12 @@
-import {useEffect} from "react";
+import {useContext, useEffect} from "react";
 import api from "../helper/api.ts";
 import {useNavigate} from "react-router-dom";
 import {toast} from "react-toastify";
+import {AuthContext} from "../context/AuthContext.tsx";
 
 const Logout = () => {
     const navigate = useNavigate();
-
+    const {logout} = useContext(AuthContext)
     useEffect(() => {
         const token = localStorage.getItem('token');
         api( "POST","verify")
@@ -17,6 +18,7 @@ const Logout = () => {
                         toast.success(response.message, {
                             position: "bottom-center"
                         });
+                        logout();
                         // On redirige l'utilisateur vers la page d'accueil
                         navigate("/");
                     })
@@ -25,6 +27,7 @@ const Logout = () => {
                         toast.error(error.message, {
                             position: "bottom-center"
                         });
+                        logout();
                         // On redirige l'utilisateur vers la page d'accueil
                         navigate("/");
                     });
@@ -34,6 +37,7 @@ const Logout = () => {
                 toast.error(error.message, {
                     position: "bottom-center"
                 });
+                logout();
                 // On redirige l'utilisateur vers la page d'accueil
                 navigate("/");
             })

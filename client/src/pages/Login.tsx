@@ -1,10 +1,11 @@
 import Input from "../components/Form/Input.tsx";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import Error from "../components/Form/Error.tsx";
 import api from "../helper/api.ts";
 import {useNavigate} from "react-router-dom";
 import Spinner from "../components/Spinner.tsx";
 import {handleIdentifier, handlePassword} from "../helper/customer.ts";
+import {AuthContext} from "../context/AuthContext.tsx";
 
 const Login = () => {
     const [identifier, setIdentifier] = useState<string | null>(null);
@@ -17,6 +18,7 @@ const Login = () => {
     })
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
+    const {login} = useContext(AuthContext)
 
     const onSubmit = () => {
         if (identifier === null || password === null) {
@@ -46,6 +48,7 @@ const Login = () => {
                     setIsRegistration(false);
                     return
                 }
+                login(identifier);
                 localStorage.setItem("token", data.message);
                 navigate("/itineraries");
             })

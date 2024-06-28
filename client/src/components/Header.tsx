@@ -1,31 +1,17 @@
 import {Link, useLocation, useNavigate} from "react-router-dom";
-import {useEffect, useState} from "react";
+import {useContext, useEffect} from "react";
 import api from "../helper/api.ts";
+import {AuthContext} from "../context/AuthContext.tsx";
 
 const Header = () => {
-    const [isConnected, setIsConnected] = useState(false);
-    const [identifier, setIdentifier] = useState("");
+    const { isConnected, identifier } = useContext(AuthContext);
     const navigate = useNavigate();
-    const location = useLocation()
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        // On vérifie si un utilisateur est déjà connecté
-        if (token) {
-            api("POST", "verify")
-                .then(data => {
-                    setIsConnected(true)
-                    localStorage.setItem('identifier', data.utilisateur.identifiant)
-                    setIdentifier(data.utilisateur.identifiant)
-                })
-                .catch(error => {
-                    // Le token ne correspond pas à un utilisateur connecté ou une erreur est survenue
-                    navigate("/")
-                    localStorage.removeItem('token')
-                    console.error(error);
-                })
+        if (!isConnected) {
+            navigate("/")
         }
-    }, [navigate, location]);
+    }, [isConnected, navigate]);
 
     return (
         <header>

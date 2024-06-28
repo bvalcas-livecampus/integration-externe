@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from "react";
+import {useContext, useEffect, useRef, useState} from "react";
 import Input from "../components/Form/Input.tsx";
 import {handleIdentifier, handlePassword} from "../helper/customer.ts";
 import api from "../helper/api.ts";
@@ -7,6 +7,7 @@ import Error from "../components/Form/Error.tsx";
 import Spinner from "../components/Spinner.tsx";
 import {toast} from "react-toastify";
 import logout from "./Logout.tsx";
+import {AuthContext} from "../context/AuthContext.tsx";
 
 const Account = () => {
     const [changeIdentifier, setChangeIdentifier] = useState(false);
@@ -20,7 +21,9 @@ const Account = () => {
         global: null
     })
     const [isLoading, setIsLoading] = useState(false);
-
+    const context = useContext(AuthContext);
+    const updateIdentifier = context.updateIdentifier
+    const id = context.identifier
     let title = "Changer vos informations"
 
     if (changeIdentifier) {
@@ -62,16 +65,15 @@ const Account = () => {
         };
 
         const update = () => {
-            api( "PATCH", "update", body, `?id=${localStorage.getItem("identifier")}`)
+            api( "PATCH", "update", body, `?id=${id}`)
                 .then((response) => {
                     toast.success(response.message, {
                         position: "bottom-center"
                     });
                     if (fieldName === "identifier") {
-                        localStorage.setItem("identifier", value);
+                        updateIdentifier(value);
                     }
                     successCallback();
-                    window.location.reload();
                 })
                 .catch(e => {
                     toast.error(e.message || "Une erreur s'est produite", {
@@ -86,7 +88,7 @@ const Account = () => {
         setIsLoading(true);
         if (fieldName === "password") {
             // On test d'abord l'ancien mot de passe avant de pouvoir le changer
-            api("POST", "login", {identifiant: localStorage.getItem('identifier'), motdepasse: lastPassword})
+            api("POST", "login", {identifiant: id, motdepasse: lastPassword})
                 .then(() => {
                     // On modifie le mot de passe
                     update();
@@ -101,6 +103,7 @@ const Account = () => {
         } else
             // On modifie l'identifiant
             update();
+
     }
 
     const onSubmitIdentifier = () => {
@@ -118,6 +121,8 @@ const Account = () => {
     if (isLoading && !localStorage.getItem("token")) {
         return <Spinner/>
     }
+
+    console.log(id)
 
     return (
         <div className="max-w-lg mx-auto  bg-white dark:bg-gray-800 rounded-lg shadow-md px-8 py-10 flex flex-col items-center">

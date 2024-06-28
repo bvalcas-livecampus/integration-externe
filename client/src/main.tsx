@@ -7,6 +7,7 @@ import Error from "./pages/Error.tsx";
 import Layout from "./components/Layout.tsx";
 import Account from "./pages/Account.tsx";
 import Itineraries from "./pages/Itineraries.tsx";
+import {AuthProvider} from "./context/AuthContext.tsx";
 
 const router = createBrowserRouter([
     {
@@ -36,6 +37,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-      <RouterProvider router={router}/>
+      <AuthProvider>
+          <RouterProvider router={router}/>
+      </AuthProvider>
   </React.StrictMode>,
 )
