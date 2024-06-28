@@ -143,7 +143,7 @@ app.post('/itinerary', async (req, res) => {
                 console.error('Une erreure est survenue lors de la maj du status du pdf dans la bdd : ' + err);
                 return ;
             }
-            console.log("Status du pdj mis à jour");
+            console.log("Status du pdf mis à jour");
             sql.finalize();
         })
     }
