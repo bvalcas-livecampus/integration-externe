@@ -2,14 +2,12 @@ const express = require('express');
 const app = express();
 const cors = require('cors')
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
 
 const sqlite3 = require('sqlite3').verbose();
 
 app.use(bodyParser.urlencoded({
     extended: true
 }));
-app.use(cookieParser());
 
 app.use(cors())
 
