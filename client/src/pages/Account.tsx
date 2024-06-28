@@ -5,6 +5,8 @@ import api from "../helper/api.ts";
 import {useNavigate} from "react-router-dom";
 import Error from "../components/Form/Error.tsx";
 import Spinner from "../components/Spinner.tsx";
+import {toast} from "react-toastify";
+import logout from "./Logout.tsx";
 
 const Account = () => {
     const [changeIdentifier, setChangeIdentifier] = useState(false);
@@ -18,10 +20,6 @@ const Account = () => {
         global: null
     })
     const [isLoading, setIsLoading] = useState(false);
-    const customer = useRef<{id: number, identifier: string}>({
-        id: 0,
-        identifier: ""
-    });
 
     let title = "Changer vos informations"
 
@@ -37,30 +35,6 @@ const Account = () => {
         setLastPassword(password);
     }
 
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        // On vérifie si un utilisateur est déjà connecté
-        if (token) {
-            setIsLoading(true)
-            api( "POST", "verify")
-                .then(response => {
-                    // L'utilisateur est connecté, on récupère l'id de l'utilisateur
-                    if (response.id) {
-                        customer.current = {
-                            id: response.id,
-                            identifier: response.identifiant
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error(error);
-                })
-                .finally(() => {
-                    setIsLoading(false)
-                });
-        }
-    }, []);
-
     const onSubmitField = (fieldName: "identifier" | "password", value, successCallback) => {
         if (!value) {
             setError({
@@ -74,7 +48,7 @@ const Account = () => {
                 global: "Vous devez d'abord corriger les erreurs avant de soumettre le formulaire"
             });
             return;
-        } else if (fieldName === "password" && lastPassword === null || lastPassword.trim().length === 0) {
+        } else if (fieldName === "password" && lastPassword === null || lastPassword?.trim().length === 0) {
             setError({
                 ...error,
                 global: "Vous devez entrer votre ancien mot de passe avant de changer votre mot de passe"
@@ -82,41 +56,54 @@ const Account = () => {
             return;
         }
 
-        const fieldNameBody = fieldName === "email" ? "identifiant" : "motdepasse";
+        const fieldNameBody = fieldName === "identifier" ? "identifiant" : "motdepasse";
         const body = {
             [fieldNameBody]: value
         };
 
-        setIsLoading(true);
-        // On test d'abord l'ancien mot de passe avant de pouvoir le changer
-        api("POST", "login", {identifiant: customer.current.identifier, motdepasse: lastPassword})
-            .then(() => {
-                // On modifie le mot de passe
-                api( "PATCH", "update", body, `?id=${customer.current.id}`)
-                    .then(() => {
-                        successCallback();
-                    })
-                    .catch(e => {
-                        setError({
-                            ...error,
-                            global: e.message || "Une erreur s'est produite"
-                        });
-                    })
-                    .finally(() => {
-                        setIsLoading(false);
+        const update = () => {
+            api( "PATCH", "update", body, `?id=${localStorage.getItem("identifier")}`)
+                .then((response) => {
+                    toast.success(response.message, {
+                        position: "bottom-center"
                     });
-            })
-            .catch(e => {
-                setIsLoading(false);
-                setError({
-                    ...error,
-                    global: "L'ancien mot de passe est incorrect"
+                    if (fieldName === "identifier") {
+                        localStorage.setItem("identifier", value);
+                    }
+                    successCallback();
+                    window.location.reload();
+                })
+                .catch(e => {
+                    toast.error(e.message || "Une erreur s'est produite", {
+                        position: "bottom-center"
+                    });
+                })
+                .finally(() => {
+                    setIsLoading(false);
                 });
-            })
+        }
 
+        setIsLoading(true);
+        if (fieldName === "password") {
+            // On test d'abord l'ancien mot de passe avant de pouvoir le changer
+            api("POST", "login", {identifiant: localStorage.getItem('identifier'), motdepasse: lastPassword})
+                .then(() => {
+                    // On modifie le mot de passe
+                    update();
+                })
+                .catch(() => {
+                    setIsLoading(false);
+                    setError({
+                        ...error,
+                        global: "L'ancien mot de passe est incorrect"
+                    });
+                })
+        } else
+            // On modifie l'identifiant
+            update();
     }
 
-    const onSubmitEmail = () => {
+    const onSubmitIdentifier = () => {
         onSubmitField('identifier', identifier, () => {
             setChangeIdentifier(false);
         });
@@ -128,7 +115,7 @@ const Account = () => {
         });
     }
 
-    if (isLoading && customer.current.id === 0) {
+    if (isLoading && !localStorage.getItem("token")) {
         return <Spinner/>
     }
 
@@ -141,7 +128,7 @@ const Account = () => {
             {(!changeIdentifier && !changePassword) && <button type="button" className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md shadow-sm w-full" onClick={() => setChangePassword(true)}>Changer votre mot de passe</button>}
             {changeIdentifier && <form action="#" className="w-full flex flex-col gap-4">
                 <Input type={"text"} name={"Identifiant"} errorMessage={error.identifier} handle={handleIdentifierWrapper}/>
-                <button type="button" className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md shadow-sm mt-2" onClick={onSubmitEmail} disabled={isLoading}>Changer votre identifiant</button>
+                <button type="button" className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md shadow-sm mt-2" onClick={onSubmitIdentifier} disabled={isLoading}>Changer votre identifiant</button>
                 {isLoading && <Spinner/>}
                 <button type="button" className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md shadow-sm" onClick={() => setChangeIdentifier(false)}>Annuler</button>
             </form>}

@@ -23,20 +23,27 @@ try {
     res.send({statut: "Erreur", message: "JSON incorrect"});
     return;
 }
+
+const db = new sqlite3.Database('compte_itineraire', (err) => {
+    if (err) {
+        console.error('Erreur lors de la connexion à la base de données:', err.message);
+    } else {
+        db.run(`CREATE TABLE IF NOT EXISTS compte (
+            identifiant VARCHAR(100) NOT NULL PRIMARY KEY, 
+            motdepasse VARCHAR(255) NOT NULL
+        )`, (err) => {
+            if (err) {
+                console.error('Erreur lors de la création de la table:', err.message);
+            }
+        });
+    }
+});
+
 app.use((req, res, next) => {
-    // S'il y a déjà une variable req.db, on continue
-    // Il n'y a pas de raison.
     if (req.db) {
         next();
     } else {
-        req.db = new sqlite3.Database('compte_itineraire');
-
-        // Creation de la table compte si elle n'existe pas
-        req.db.run("CREATE TABLE IF NOT EXISTS compte (\
-            identifiant VARCHAR(100) NOT NULL, \
-            motdepasse VARCHAR(255) NOT NULL, \
-            PRIMARY KEY (identifiant) )");
-
+        req.db = db;
         next();
     }
 });
@@ -156,9 +163,9 @@ app.post('/login', (req, res) => {
                 res.status(500).send({status: "Erreur", message: 'Erreur sql'})
                 return;
             }
-            if (!result.motdepasse) {
-                console.error("Compte inconnu (ou en double, c'est un problème)");
-                res.status(404).send({status: "Erreur", message: "Compte inconnu (ou en double, c'est un problème)"})
+            if (!result) {
+                console.error("Identifiants incorrects");
+                res.status(404).send({status: "Erreur", message: "Identifiants incorrects"})
                 return;
             }
             const row = result.motdepasse;

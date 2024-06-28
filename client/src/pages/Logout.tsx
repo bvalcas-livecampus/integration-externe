@@ -11,9 +11,12 @@ const Logout = () => {
         api( "POST","verify")
             .then(() => {
                 api("GET","logout", undefined, `?token=${token}`)
-                    .then(() => {
+                    .then((response) => {
                         // On supprime le token du localStorage
                         localStorage.removeItem("token");
+                        toast.success(response.message, {
+                            position: "bottom-center"
+                        });
                         // On redirige l'utilisateur vers la page d'accueil
                         navigate("/");
                     })
