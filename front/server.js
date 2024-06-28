@@ -10,7 +10,7 @@ require('dotenv').config()
 
 const sqlite3 = require('sqlite3').verbose();
 
-app.use(cors())
+app.use(cors({ credentials: true, origin: "http://localhost:5173" /* pour le site en dev */ || "*" /* pour PostMan */ }))
 
 app.use(bodyParser.urlencoded({
     extended: true
@@ -21,8 +21,7 @@ var fileStoreOptions = {};
 app.use(session({
     store: new FileStore(fileStoreOptions),
     secret: process.env.SECRET_KEY_SESSION,
-    resave: true,
-    cookie: { maxAge: 1000 * 60 * 20 },
+    cookie: { maxAge: 1000 * 60 * 20, sameSite: "none" },
 }))
 
 try {

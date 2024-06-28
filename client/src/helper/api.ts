@@ -11,6 +11,7 @@ const api = async (method: 'POST' | 'GET' | 'PATCH', action: string, body: objec
             "Content-Type": "application/json",
             ...headers,
         },
+        credentials: "include"
     };
 
     if (method !== 'GET') {
