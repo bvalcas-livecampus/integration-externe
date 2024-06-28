@@ -1,8 +1,15 @@
-const api = async (method: 'POST' | 'GET' | 'PATCH', action: string, body: object = {}, params:string = "") => {
+const api = async (method: 'POST' | 'GET' | 'PATCH', action: string, body: object = {}, params:string = "", headers: object = {}) => {
+    const token = localStorage.getItem('token');
+
+    if (token) {
+        headers = { ...headers, "token": token}
+    }
+
     const payload: RequestInit = {
         method,
         headers: {
             "Content-Type": "application/json",
+            ...headers,
         },
     };
 
