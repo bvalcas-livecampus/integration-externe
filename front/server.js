@@ -304,6 +304,39 @@ app.patch('/update', async (req, res) => {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Système itinéraires
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// /**
+//  * Cette fonction permet de faire une requête au serveur pdf
+//  * @param method 'POST' | 'GET'
+//  * @param action 'itinerary'
+//  * @param body
+//  * @param params
+//  * @param headers
+//  * @return {Promise<any>}
+//  * @throws {Error}
+//  */
+// const pdf = async (method, action, body, params = "", headers = {}) => {
+//     let response = {}
+//     let responseJson = {}
+//     try {
+//         response = await fetch(`http://localhost:3002/${action}?${params}`, {
+//             method,
+//             headers: {
+//                 "Content-Type": "application/json",
+//                 ...headers
+//             },
+//             body: JSON.stringify(body),
+//         });
+//     } catch (e) {
+//         return e;
+//     }
+//     if (response.status === 200 || response.status === 201 || response.status === 204) {
+//         return responseJson;
+//     } else {
+//         throw new Error(responseJson.message);
+//     }
+// }
+
 app.use((req, res, next) => {
     // S'il y a déjà une variable req.db, on continue
     // Il n'y a pas de raison.
@@ -445,49 +478,58 @@ app.post('/itinerary', async (req, res) => {
     const {token} = req.headers;
 
     try {
-        await verify(token, req);
+        const result = await verify(token, req);
+        const identifier = result.utilisateur.identifiant;
+        const {name, points} = req.body;
+        if (identifier && name && points) {
+            let sql = req.db.prepare("INSERT INTO itinerary (identifier, name) VALUES (?, ?)");
+
+            await sql.run([identifier, name], async function (err) {
+                if (err) {
+                    res.status(401).send({
+                        status: "Erreur",
+                        message: "Une erreur est survenue lors de la création de l'itinéraire"
+                    });
+                    return;
+                }
+
+                let newItineraryId = this.lastID;
+                sql.finalize();
+
+                await Promise.all(points.map( async (point) => {
+                    let stepSql = req.db.prepare("INSERT INTO itinerary_route (itinerary_id, lon, lat) VALUES (?, ?, ?)");
+                    stepSql.run([newItineraryId, point.lon, point.lat], (err) => {
+                        if (err) {
+                            console.log(err)
+                            res.status(401).send({
+                                status: "Erreur",
+                                message: "Une erreur est survenue lors de la création d'une étape de l'itinéraire'"
+                            });
+                            return;
+                        }
+                        stepSql.finalize();
+                    });
+                }))
+
+                res.status(201).send({status: "Succès", message: "Itinéraire enregistré"});
+                await fetch(`http://localhost:3002/itinerary`, {
+                    method : 'POST',
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({itinerary : newItineraryId, name : name, points : points}),
+                });
+
+            });
+        } else {
+            res.status(400).send({
+                status: "Erreur",
+                message: "L'identifiant, le nom ou les étapes du trajet ne sont pas définis"
+            });
+        }
     } catch (e) {
         res.status(401).send({status: "Erreur", message: e.message});
         return;
-    }
-
-    const {identifier, name, points} = req.body;
-    if (identifier && name && steps) {
-        let sql = req.db.prepare("INSERT INTO itinerary (identifier, name) VALUES (?, ?)");
-
-        sql.run([identifier, name], function (err) {
-            if (err) {
-                res.status(401).send({
-                    status: "Erreur",
-                    message: "Une erreur est survenue lors de la création de l'itinéraire"
-                });
-                return;
-            }
-
-            let newItineraryId = this.lastID;
-            sql.finalize();
-
-            for (const point of points) {
-                let stepSql = req.db.prepare("INSERT INTO itinerary_route (itinerary_id, lon, lat) VALUES (?, ?, ?)");
-                stepSql.run([newItineraryId, step.lon, step.lat], (err) => {
-                    if (err) {
-                        res.status(401).send({
-                            status: "Erreur",
-                            message: "Une erreur est survenue lors de la création d'une étape de l'iténiraire'"
-                        });
-                        return;
-                    }
-                    stepSql.finalize();
-                });
-            }
-
-            res.status(201).send({status: "Succès", message: "Itinéraire enregistré"});
-        });
-    } else {
-        res.status(400).send({
-            status: "Erreur",
-            message: "L'identifiant, le nom ou les étapes du trajet ne sont pas définis"
-        });
     }
 });
 
@@ -517,75 +559,89 @@ app.get("/itinerary", async (req, res) => {
     const {token} = req.headers;
 
     try {
-        await verify(token, req);
-    } catch (e) {
-        res.status(401).send({status: "Erreur", message: e.message});
-        return;
-    }
+        const result = await verify(token, req);
+        const identifier = result.utilisateur.identifiant;
 
-    const {identifier} = req.body;
-    if (!identifier) {
-        res.status(400).send({status: "Erreur", message: "L'identifiant n'est pas défini"});
-        return;
-    }
+        if(req.query.id){
 
-    const sql = `
-        SELECT it.id AS itinerary_id,
-               it.identifier,
-               it.name,
-               ir.id AS step_id,
-               ir.lon,
-               ir.lat,
-               ir.route_index
-        FROM itinerary it
-                 LEFT JOIN
-             itinerary_route ir ON it.id = ir.itinerary_id
-        WHERE it.identifier = ?
-    `;
-
-    try {
-        const rows = await new Promise((resolve, reject) => {
-            req.db.all(sql, [identifier], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows);
-            });
-        });
-
-        if (rows.length === 0) {
-            res.status(404).send({status: "Erreur", message: "Aucun itinéraire trouvé pour cet identifiant"});
-            return;
-        }
-
-        let itinerary = {
-            identifier: rows[0].identifier,
-            name: rows[0].name,
-            steps: [],
-        };
-
-        for (const row of rows) {
-            const response = await fetch(`https://api-adresse.data.gouv.fr/reverse/?lon=${row.lon}&lat=${row.lat}`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.features.length > 0) {
-                    const address = data.features[0].properties.label;
-                    itinerary.steps.push({
-                        lon: row.lon,
-                        lat: row.lat,
-                        route_index: row.route_index,
-                        address,
-                    });
+            const response = await fetch(`http://localhost:3002/itinerary?id=` + req.query.id, {
+                method : 'GET',
+                headers: {
+                    "Content-Type": "application/json",
                 }
+            });
+
+            const itineraire_base64 = (await response.json()).message;
+            res.type('application/pdf')
+            res.header('Content-Disposition', 'attachment; filename="itineraire.pdf"')
+            res.send(Buffer.from(itineraire_base64, 'base64'))
+            return
+
+        }else{
+            
+            const sql = `
+                SELECT it.id AS itinerary_id,
+                    it.identifier,
+                    it.name,
+                    ir.id AS step_id,
+                    ir.lon,
+                    ir.lat,
+                    ir.route_index
+                FROM itinerary it
+                        LEFT JOIN
+                    itinerary_route ir ON it.id = ir.itinerary_id
+                WHERE it.identifier = ?
+            `;
+
+            try {
+                const rows = await new Promise((resolve, reject) => {
+                    req.db.all(sql, [identifier], (err, rows) => {
+                        if (err) reject(err);
+                        else resolve(rows);
+                    });
+                });
+
+                if (rows.length === 0) {
+                    res.status(404).send({status: "Erreur", message: "Aucun itinéraire trouvé pour cet identifiant"});
+                    return;
+                }
+
+                let itinerary = {
+                    identifier: rows[0].identifier,
+                    name: rows[0].name,
+                    steps: [],
+                };
+
+                for (const row of rows) {
+                    const response = await fetch(`https://api-adresse.data.gouv.fr/reverse/?lon=${row.lon}&lat=${row.lat}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.features.length > 0) {
+                            const address = data.features[0].properties.label;
+                            itinerary.steps.push({
+                                lon: row.lon,
+                                lat: row.lat,
+                                route_index: row.route_index,
+                                address,
+                            });
+                        }
+                    }
+                }
+
+                res.send({status: "Succès", itinerary});
+
+            } catch (error) {
+                console.error(error);
+                res.status(400).send({
+                    status: "Erreur",
+                    message: "Une erreur est survenue lors de la récupération des itinéraires"
+                });
             }
         }
-
-        res.send({status: "Succès", itinerary});
-
-    } catch (error) {
-        console.error(error);
-        res.status(400).send({
-            status: "Erreur",
-            message: "Une erreur est survenue lors de la récupération des itinéraires"
-        });
+    } catch (e) {
+        console.log(e)
+        res.status(401).send({status: "Erreur", message: e.message});
+        return;
     }
 });
 
