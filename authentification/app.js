@@ -59,16 +59,18 @@ app.post('/register', async (req, res) => {
         bcrypt.hash(motdepasse, 10, (err, hash) => {
             if (err) {
                 console.error('Une erreure est survenue lors du hachage. Veuillez contacter l\'administrateur. Error :' + err);
-                res.status(500).send({status: "Erreur", message: 'Une erreure est survenue lors du hachage. Veuillez contacter l\'administrateur.'})
+                res.status(500).send({
+                    status: "Erreur",
+                    message: 'Une erreure est survenue lors du hachage. Veuillez contacter l\'administrateur.'
+                })
                 return;
             }
             let sql = req.db.prepare("INSERT INTO compte VALUES (?, ?)", [identifiant, hash])
             sql.run((err) => {
                 if (err) {
-                    console.error('Une erreure est survenue lors de l\'a création du compte : ' + err);
-                    res.status(500).send({
-                        status: "Erreur",
-                        message: 'Une erreure est survenue lors de l\'a création du compte ' + err
+                    console.error('Une erreur est survenue lors de l\'a création du compte : ' + err);
+                    res.status(500).send({status: "Erreur",
+                        message: 'Une erreur est survenue lors de l\'a création du compte ' + err
                     });
                     return;
                 }
@@ -226,7 +228,7 @@ app.get('/logout', (req, res) => {
  */
 app.post('/verify', (req, res) => {
     const token = req.headers.token;
-
+    console.log(token)
     if (!token) {
         res.status(400).send({statut: "Erreur", message: "Le token doit être fournis"});
     }
@@ -273,14 +275,20 @@ app.patch('/update', (req, res) => {
         bcrypt.hash(motdepasse, 10, (err, hash) => {
             if (err) {
                 console.error('Une erreure est survenue lors du hachage. Veuillez contacter l\'administrateur. Error :' + err);
-                res.status(500).send({status: "Erreur", message: 'Une erreure est survenue lors du hachage. Veuillez contacter l\'administrateur.'})
+                res.status(500).send({
+                    status: "Erreur",
+                    message: 'Une erreure est survenue lors du hachage. Veuillez contacter l\'administrateur.'
+                })
                 return;
             }
             let sql = req.db.prepare("UPDATE compte SET motdepasse = ? WHERE identifiant = ?", [motdepasse, id])
             sql.run((err) => {
                 if (err) {
                     console.error('Une erreure est survenue lors de la modification du compte : ' + err);
-                    res.status(500).send({status: "Erreur", message: 'Une erreure est survenue lors de la modification du compte'});
+                    res.status(500).send({
+                        status: "Erreur",
+                        message: 'Une erreure est survenue lors de la modification du compte'
+                    });
                     return;
                 }
                 console.log("Modification réussie avec succès");
@@ -293,7 +301,10 @@ app.patch('/update', (req, res) => {
         sql.run((err) => {
             if (err) {
                 console.error('Une erreure est survenue lors de la modification du compte : ' + err);
-                res.status(500).send({status: "Erreur", message: 'Une erreure est survenue lors de la modification du compte'});
+                res.status(500).send({
+                    status: "Erreur",
+                    message: 'Une erreure est survenue lors de la modification du compte'
+                });
                 return;
             }
             console.log("Modification réussie avec succès");
