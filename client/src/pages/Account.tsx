@@ -22,7 +22,7 @@ const Account = () => {
         id: 0,
         identifier: ""
     });
-    const navigate = useNavigate();
+
     let title = "Changer vos informations"
 
     if (changeIdentifier) {
@@ -42,7 +42,7 @@ const Account = () => {
         // On vérifie si un utilisateur est déjà connecté
         if (token) {
             setIsLoading(true)
-            api( "POST", "verify", {jeton: token})
+            api( "POST", "verify")
                 .then(response => {
                     // L'utilisateur est connecté, on récupère l'id de l'utilisateur
                     if (response.id) {
@@ -53,15 +53,11 @@ const Account = () => {
                     }
                 })
                 .catch(error => {
-                    // Le token ne correspond pas à un utilisateur connecté ou une erreur est survenue
-                    navigate("/");
                     console.error(error);
                 })
                 .finally(() => {
                     setIsLoading(false)
                 });
-        } else {
-            //navigate("/");
         }
     }, []);
 
