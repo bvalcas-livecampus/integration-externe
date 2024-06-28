@@ -228,6 +228,7 @@ app.get('/logout', (req, res) => {
  */
 app.post('/verify', (req, res) => {
     const token = req.headers.token;
+
     if (!token) {
         res.status(400).send({statut: "Erreur", message: "Le token doit être fournis"});
     }
@@ -315,6 +316,6 @@ app.patch('/update', (req, res) => {
     }
 })
 
-const server = app.listen(3000, () => {
+app.listen(3000, () => {
     console.log("Le serveur d'authentification écoute sur le port 3000");
 });
