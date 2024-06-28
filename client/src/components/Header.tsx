@@ -9,7 +9,7 @@ const Header = () => {
         const token = localStorage.getItem('token');
         // On vérifie si un utilisateur est déjà connecté
         if (token) {
-            api.auth(3001, "POST", "verify",  {jeton: token})
+            api("POST", "verify", {}, "", { "Cookie" : `token=${token}`})
                 .then(() => {
                     // L'utilisateur est connecté
                     setIsConnected(true);

@@ -54,22 +54,6 @@ const auth = async (method, action, body, params = "", headers = {}) => {
 }
 
 /**
- * Cette fonction permet de vérifier un token
- * @param token
- * @return {Promise<{
- *     any
- * }>}
- * @throws {Error}
- */
-async function verify(token) {
-    if (token) {
-        await auth("POST", "verify", {}, "", {token: token})
-    } else {
-        throw new Error("Token manquant")
-    }
-}
-
-/**
  * Cette route permet de créer un compte
  * @req La requête
  * @res La réponse
@@ -135,7 +119,7 @@ app.post('/login', async (req, res) => {
  *   }>
  */
 app.get('/logout', async (req, res) => {
-    const {token} = res.headers;
+    const {token} = req.headers;
     if (token) {
         auth("GET", "logout", {token})
             .then((response) => {
@@ -148,15 +132,17 @@ app.get('/logout', async (req, res) => {
     }
 });
 
+async function verify(token) {
+    if (token) {
+        await auth("POST", "verify", {}, "", { token: token })
+    } else {
+        throw new Error("Token manquant")
+    }
+}
+
 /**
- * Cette route permet de modifier un champ de l'utilisateur
- * @req La requête
- * @res La réponse
- * @req.body {Object} Les données de la requête.
- * @req.body.identifiant {string} L'identifiant de l'utilisateur
- * @req.body.motdepasse {string} Le mot de passe de l'utilisateur
- * @req.cookies.token {string} Le jeton de l'utilisateur
- * @req.query.id {string} L'identifiant de l'utilisateur
+ * Cette route permet de supprimer un compte en fonction de son identifiant
+>>>>>>> c1fa9225d6b16088ce319c686f2386603c8a8a31
  * @param id
  * @return {Promise<{
  *   status: string,
@@ -302,7 +288,7 @@ const openData = async (limit, offset) => {
  *  }>
  */
 app.get('/stations', async (req, res) => {
-    const {token} = res.headers;
+    const {token} = req.headers;
 
     try {
         await verify(token);
@@ -340,7 +326,7 @@ app.get('/stations', async (req, res) => {
  *    }>
  */
 app.post('/itinerary', async (req, res) => {
-    const {token} = res.headers;
+    const {token} = req.headers;
 
     try {
         await verify(token);
@@ -403,7 +389,7 @@ app.post('/itinerary', async (req, res) => {
  * >}
  */
 app.get("/itinerary", async (req, res) => {
-    const {token} = res.headers;
+    const {token} = req.headers;
 
     try {
         await verify(token);
@@ -484,7 +470,7 @@ app.get("/itinerary", async (req, res) => {
  *    }>
  */
 app.delete("/itinerary/:id", async (req, res) => {
-    const {token} = res.headers;
+    const {token} = req.headers;
 
     try {
         await verify(token);
