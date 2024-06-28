@@ -54,7 +54,7 @@ const auth = async (method, action, body, params = "", headers = {}) => {
 }
 
 /**
- * Cette fonction permet de créer un compte
+ * Cette route permet de créer un compte
  * @return {Promise<{
  *  status: string,
  *  message: string
@@ -75,7 +75,7 @@ app.post('/register', async (req, res) => {
 })
 
 /**
- * Cette fonction permet de connecter un utilisateur
+ * Cette route permet de connecter un utilisateur
  * @return {Promise<{
  *   status: string,
  *   jeton: string
@@ -99,7 +99,7 @@ app.post('/login', async (req, res) => {
 });
 
 /**
- * Cette fonction permet de déconnecter un utilisateur
+ * Cette route permet de déconnecter un utilisateur
  * @return {Promise<{
  *   status: string,
  *   message: string
@@ -120,7 +120,7 @@ app.get('/logout', async (req, res) => {
 });
 
 /**
- * Cette fonction permet de vérifier un jeton
+ * Cette route permet de vérifier un jeton
  * @return {Promise<{
  *    status: string,
  *    message: string
@@ -152,7 +152,7 @@ async function verify(token) {
 }
 
 /**
- * Cette fonction permet de supprimer un compte en fonction de son identifiant
+ * Cette route permet de supprimer un compte en fonction de son identifiant
  * @param id
  * @return {Promise<{
  *   status: string,
@@ -222,7 +222,7 @@ app.use((req, res, next) => {
 });
 
 /**
- * Cette fonction permet de récupérer les données de l'api open data
+ * Cette route permet de récupérer les données de l'api open data
  * @param limit {number}
  * @param offset {number}
  * @return {Promise<
@@ -265,7 +265,7 @@ const openData = async (limit, offset) => {
 }
 
 /**
- * Cette fonction permet de récupérer toutes les stations de vélib
+ * Cette route permet de récupérer toutes les stations de vélib
  * @return {Promise<
  *  {
  *   total_count: number,
@@ -327,7 +327,7 @@ app.get('/stations', async (req, res) => {
 });
 
 /**
- * Cette fonction permet de créer un itinéraire
+ * Cette route permet de créer un itinéraire
  * @return {Promise<{
  *    status: string,
  *    message: string
@@ -387,7 +387,7 @@ app.post('/itinerary', async (req, res) => {
 });
 
 /**
- * Cette fonction permet de récupérer un itinéraire en fonction de son identifiant
+ * Cette route permet de récupérer un itinéraire en fonction de son identifiant
  * @return {Promise<{
  *     status: string,
  *     itinerary: {
@@ -488,7 +488,7 @@ app.get("/itinerary", async (req, res) => {
 });
 
 /**
- * Cette fonction permet de supprimer un itinéraire en fonction de son identifiant
+ * Cette route permet de supprimer un itinéraire en fonction de son identifiant
  * @param id
  * @return {Promise<{
  *    status: string,

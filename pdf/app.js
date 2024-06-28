@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors')
 const app = express();
+const fs = require('fs');
 const PuppeteerHTMLPDF = require("puppeteer-html-pdf");
 
 const sqlite3 = require('sqlite3').verbose();
@@ -141,21 +142,33 @@ app.post('/itinerary', async (req, res) => {
 
 // récupération du pdf
 app.get('/itinerary', async (req, res) => {
-    const {token, id} = req.body;
+    const token = req.body;
+    const id = req.query.id;
 
-    res.status(204);
-    res.send();
-    
-    await Promise.all(points.map( async (coordinates) => {
-        const info = await api_adresse(coordinates["lon"], coordinates['lat'])
-        content = content + "<p>Aller à " + info.features[0].properties.street + "</p>";
-    }));
-
-    try {
-        await htmlPDF.create(content)
-    } catch (error){
-        console.log("Erreur lors de la création de pdf : ", error)
-    }
+    let sql = req.db.prepare("SELECT url FROM pdf WHERE id_itineraire = ?", [id])
+    sql.get( async (err, result) => {
+        if (err){
+            console.error('Une erreure est survenue lors de la récupération du pdf dans la bdd : ' + err);
+            res.status(401);
+            res.send({statut : "Erreur", Message : "Une erreure est survenue lors de la récupération du pdf."})
+            return ;
+        }
+        if(!result.url || !fs.existsSync(result.url)) {
+            console.error("Le pdf n'existe pas");
+            res.status(401);
+            res.send({ status: "Erreur", message: "Le pdf n'existe pas." })
+            return ;
+        }
+        res.download(result.url, 'itineraire.pdf', (err) => {
+            if (err) {
+                res.status(402);
+                console.log(err)
+                res.send({status : "Erreur", message : "Erreur lors du téléchargement"});
+                return
+            }
+            res.status(204);
+        });
+    })
 })
 
 
