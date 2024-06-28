@@ -244,8 +244,8 @@ app.post('/verify', (req, res) => {
             })
         })
         .catch((err) => {
-            console.log(err)
-            res.status(401).send({status: "Erreur", message: err})
+            console.error(`Erreur verification token : ${err.message}`)
+            res.status(401).send({status: "Erreur", message: err.message})
         });
 })
 

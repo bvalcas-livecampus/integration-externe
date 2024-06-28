@@ -212,7 +212,7 @@ app.get('/logout', async (req, res) => {
  */
 async function verify(token, req) {
     if (token) {
-        return auth(req, "POST", "verify", {}, "", { token: token })
+        return await auth(req, "POST", "verify", {}, "", { token: token })
     } else {
         throw new Error("Token manquant")
     }
@@ -242,6 +242,7 @@ app.post('/verify', async (req, res) => {
             .then((response) => {
                 res.status(200).send(response);
             }).catch((error) => {
+                console.log("error", error.message)
             res.status(401).send({status: "Erreur", message: error.message});
         });
     } else {
