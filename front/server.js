@@ -106,7 +106,7 @@ app.post('/login', async (req, res) => {
  *   }>
  */
 app.get('/logout', async (req, res) => {
-    const {token} = req.cookies;
+    const {token} = req.headers;
     if (token) {
         auth("GET", "logout", {token})
             .then((response) => {
@@ -127,7 +127,7 @@ app.get('/logout', async (req, res) => {
  *    }>
  */
 app.post('/verify', async (req, res) => {
-    const {token} = req.cookies;
+    const {token} = req.headers;
     
     if (token) {
         auth("POST", "verify", {}, "", {
@@ -293,7 +293,7 @@ const openData = async (limit, offset) => {
  *  }>
  */
 app.get('/stations', async (req, res) => {
-    const {token} = req.cookies;
+    const {token} = req.headers;
 
     try {
         await verify(token);
@@ -334,7 +334,7 @@ app.get('/stations', async (req, res) => {
  *    }>
  */
 app.post('/itinerary', async (req, res) => {
-    const {token} = req.cookies;
+    const {token} = req.headers;
 
     try {
         await verify(token);
@@ -409,7 +409,7 @@ app.post('/itinerary', async (req, res) => {
  * >}
  */
 app.get("/itinerary", async (req, res) => {
-    const {token} = req.cookies;
+    const {token} = req.headers;
 
     try {
         await verify(token);
@@ -496,7 +496,7 @@ app.get("/itinerary", async (req, res) => {
  *    }>
  */
 app.delete("/itinerary/:id", async (req, res) => {
-    const {token} = req.cookies;
+    const {token} = req.headers;
 
     try {
         await verify(token);
