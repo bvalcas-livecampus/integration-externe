@@ -4,6 +4,7 @@ import {MapContainer, TileLayer, Marker, Popup, useMapEvent} from "react-leaflet
 import 'leaflet/dist/leaflet.css';
 import '../app.css';
 import Spinner from "../components/Spinner.tsx";
+import {useNavigate} from "react-router-dom";
 
 const MapClickHandler = ({ onMapClick }) => {
     // Utilisation du hook useMapEvent pour gérer le clic sur la carte
@@ -15,8 +16,6 @@ const Itineraries = () => {
     const [stations, setStations] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [markers, setMarkers] = useState([]);
-
-    console.log(markers)
 
     useEffect(() => {
         api("GET", "stations").then(stations => {

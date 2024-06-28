@@ -180,7 +180,7 @@ app.post('/login', async (req, res) => {
  *   } >
  */
 app.get('/logout', async (req, res) => {
-    const {token} = req.query;
+    const {token} = req.query
     if (token) {
         req.session.destroy((err) => {
             if (err) {

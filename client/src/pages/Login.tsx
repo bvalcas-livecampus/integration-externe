@@ -42,8 +42,12 @@ const Login = () => {
 
         apiCall
             .then((data) => {
+                if (isRegistration) {
+                    setIsRegistration(false);
+                    return
+                }
                 localStorage.setItem("token", data.message);
-                navigate("/");
+                navigate("/itineraries");
             })
             .catch((e) => {
                 setError({

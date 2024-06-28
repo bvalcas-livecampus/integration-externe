@@ -1,13 +1,11 @@
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import {useEffect, useState} from "react";
 import api from "../helper/api.ts";
 
 const Header = () => {
     const [isConnected, setIsConnected] = useState(false);
     const [identifier, setIdentifier] = useState("");
-
-    console.log(isConnected)
-    console.log(identifier)
+    const navigate = useNavigate();
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -15,15 +13,19 @@ const Header = () => {
         if (token) {
             api("POST", "verify")
                 .then(data => {
+                    console.log(data)
                     setIsConnected(true)
                     setIdentifier(data.utilisateur.identifiant)
                 })
                 .catch(error => {
                     // Le token ne correspond pas à un utilisateur connecté ou une erreur est survenue
+                    navigate("/")
                     console.error(error);
                 })
+        } else {
+            navigate("/")
         }
-    }, []);
+    }, [navigate]);
 
     return (
         <header>

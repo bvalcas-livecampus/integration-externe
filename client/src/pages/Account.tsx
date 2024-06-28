@@ -22,7 +22,7 @@ const Account = () => {
         id: 0,
         identifier: ""
     });
-    const navigate = useNavigate();
+
     let title = "Changer vos informations"
 
     if (changeIdentifier) {
@@ -53,15 +53,11 @@ const Account = () => {
                     }
                 })
                 .catch(error => {
-                    // Le token ne correspond pas à un utilisateur connecté ou une erreur est survenue
-                    navigate("/");
                     console.error(error);
                 })
                 .finally(() => {
                     setIsLoading(false)
                 });
-        } else {
-            //navigate("/");
         }
     }, []);
 
