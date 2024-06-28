@@ -168,14 +168,8 @@ app.get('/itinerary', async (req, res) => {
             return ;
         }
         
-        res.download(result.url, 'itineraire.pdf', (err) => {
-            if (err) {
-                res.status(402);
-                console.log(err)
-                res.send({status : "Erreur", message : "Erreur lors du téléchargement"});
-                return
-            }
-        });
+        res.status(200);
+        res.send({ statut : 'Succès', message : fs.readFileSync(result.url, {encoding: "base64"}) });
     })
 })
 
