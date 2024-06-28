@@ -25,7 +25,10 @@ app.use(session({
 }))
 
 try {
-    app.use(bodyParser.json());
+    app.use(bodyParser.json({
+        limit: '50mb',
+        extended: true
+    }));
 } catch {
     app.status(400)
     res.send({statut: "Erreur", message: "JSON incorrect"});
@@ -301,38 +304,6 @@ app.patch('/update', async (req, res) => {
 // Système itinéraires
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// /**
-//  * Cette fonction permet de faire une requête au serveur pdf
-//  * @param method 'POST' | 'GET'
-//  * @param action 'itinerary'
-//  * @param body
-//  * @param params
-//  * @param headers
-//  * @return {Promise<any>}
-//  * @throws {Error}
-//  */
-// const pdf = async (method, action, body, params = "", headers = {}) => {
-//     let response = {}
-//     let responseJson = {}
-//     try {
-//         response = await fetch(`http://localhost:3002/${action}?${params}`, {
-//             method,
-//             headers: {
-//                 "Content-Type": "application/json",
-//                 ...headers
-//             },
-//             body: JSON.stringify(body),
-//         });
-//     } catch (e) {
-//         return e;
-//     }
-//     if (response.status === 200 || response.status === 201 || response.status === 204) {
-//         return responseJson;
-//     } else {
-//         throw new Error(responseJson.message);
-//     }
-// }
-
 app.use((req, res, next) => {
     // S'il y a déjà une variable req.db, on continue
     // Il n'y a pas de raison.
@@ -476,8 +447,8 @@ app.post('/itinerary', async (req, res) => {
     try {
         const result = await verify(token, req);
         const identifier = result.utilisateur.identifiant;
-        const {name, points} = req.body;
-        if (identifier && name && points) {
+        const {name, points, image} = req.body;
+        if (identifier && name && points && image) {
             let sql = req.db.prepare("INSERT INTO itinerary (identifier, name) VALUES (?, ?)");
 
             await sql.run([identifier, name], async function (err) {
@@ -512,7 +483,7 @@ app.post('/itinerary', async (req, res) => {
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({itinerary : newItineraryId, name : name, points : points}),
+                    body: JSON.stringify({itinerary : newItineraryId, name, points, image}),
                 });
 
                 res.status(201).send({status: "Succès", message: "Itinéraire enregistré"});
@@ -520,7 +491,7 @@ app.post('/itinerary', async (req, res) => {
         } else {
             res.status(400).send({
                 status: "Erreur",
-                message: "L'identifiant, le nom ou les étapes du trajet ne sont pas définis"
+                message: "L'identifiant, le nom les étapes ou l'image du trajet ne sont pas définis"
             });
         }
     } catch (e) {

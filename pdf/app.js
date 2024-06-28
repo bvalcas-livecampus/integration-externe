@@ -16,7 +16,10 @@ app.use(bodyParser.urlencoded({
 app.use(cors())
 
 try {
-    app.use(bodyParser.json());
+    app.use(bodyParser.json({
+        limit: '50mb',
+        extended: true
+    }));
 } catch {
     app.status(400)
     res.send({ statut: "Erreur", message: "JSON incorrect" });
@@ -95,7 +98,7 @@ const api_adresse = async (lon, lat) => {
 
 // creation du pdf
 app.post('/itinerary', async (req, res) => {
-    const {itinerary, name, points} = req.body;
+    const {itinerary, name, points, image} = req.body;
     const htmlPDF = new PuppeteerHTMLPDF();
     const url = `./public/` + itinerary + ' - ' + name + '.pdf';
     const options = {
@@ -125,6 +128,8 @@ app.post('/itinerary', async (req, res) => {
         const info = await api_adresse(coordinates["lon"], coordinates['lat'])
         content = content + "<p>Allez à " + info.features[0].properties.label + "</p>";
     }));
+
+    content += `<img src="${image}" style="width: 100%; height: auto;" />`;
 
     try {
         await htmlPDF.create(content)

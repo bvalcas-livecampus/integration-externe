@@ -6,8 +6,10 @@ import Logout from "./pages/Logout.tsx";
 import Error from "./pages/Error.tsx";
 import Layout from "./components/Layout.tsx";
 import Account from "./pages/Account.tsx";
-import Itineraries from "./pages/Itineraries.tsx";
+import CreateItineraries from "./pages/CreateItineraries.tsx";
 import {AuthProvider} from "./context/AuthContext.tsx";
+import Itineraries from "./pages/Itineraries.tsx";
+import DashboardItineraries from "./pages/DashboardItineraries.tsx";
 
 const router = createBrowserRouter([
     {
@@ -20,8 +22,16 @@ const router = createBrowserRouter([
                 element: <Login />,
             },
             {
+                path: '/create-itinerary',
+                element: <CreateItineraries />,
+            },
+            {
                 path: '/itineraries',
                 element: <Itineraries />,
+            },
+            {
+              path: '/dashboard-itineraries',
+                element: <DashboardItineraries />,
             },
             {
                 path: 'logout',

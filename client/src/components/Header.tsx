@@ -1,17 +1,29 @@
-import {Link, useLocation, useNavigate} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import {useContext, useEffect} from "react";
-import api from "../helper/api.ts";
 import {AuthContext} from "../context/AuthContext.tsx";
+import api from "../helper/api.ts";
 
 const Header = () => {
-    const { isConnected, identifier } = useContext(AuthContext);
+    const {isConnected, identifier, login, logout} = useContext(AuthContext);
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!isConnected) {
-            navigate("/")
+        const token = localStorage.getItem('token');
+        if (token) {
+            api("POST", "verify")
+                .then((response) => {
+                    login(response.utilisateur.identifiant)
+                })
+                .catch(error => {
+                    // Le token ne correspond pas à un utilisateur connecté ou une erreur est survenue
+                    logout()
+                    localStorage.removeItem('token')
+                    console.error(error);
+                })
+        } else {
+            logout()
         }
-    }, [isConnected, navigate]);
+    }, [isConnected, navigate, login, logout]);
 
     return (
         <header>
@@ -26,22 +38,36 @@ const Header = () => {
                     <div className="flex items-center lg:order-2">
                         {!isConnected &&
                             <Link to={"/"}
-                                  className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
+                                  className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-xs px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
                                 <p>Connexion</p>
                             </Link>}
                         {identifier &&
-                            <p className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">Bonjour {identifier}</p>
+                            <p className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-xs px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">Bonjour {identifier}</p>
                         }
                         {isConnected &&
-                            <Link to={"/account"}
-                                  className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
-                                <p>Compte</p>
-                            </Link>}
-                        {isConnected &&
-                            <Link to={"/logout"}
-                                  className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
-                                <p>Déconnexion</p>
-                            </Link>}
+                            <>
+                                <Link to={"/itineraries"}
+                                      className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-xs px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
+                                    <p>Voir les stations disponibles</p>
+                                </Link>
+                                <Link to={"/create-itinerary"}
+                                      className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-xs px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
+                                    <p>Créer un itinéraire</p>
+                                </Link>
+                                <Link to={"/dashboard-itineraries"}
+                                      className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-xs px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
+                                    <p>Consultez la liste de vos itinéraires</p>
+                                </Link>
+                                <Link to={"/account"}
+                                      className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-xs px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
+                                    <p>Compte</p>
+                                </Link>
+                                <Link to={"/logout"}
+                                      className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-xs px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
+                                    <p>Déconnexion</p>
+                                </Link>
+                            </>
+                        }
                     </div>
                 </div>
             </nav>
