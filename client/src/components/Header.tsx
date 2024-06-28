@@ -13,7 +13,7 @@ const Header = () => {
         const token = localStorage.getItem('token');
         // On vérifie si un utilisateur est déjà connecté
         if (token) {
-            api("POST", "verify", {}, "", {"Cookie": `token=${token}`})
+            api("POST", "verify")
                 .then(data => {
                     setIsConnected(true)
                     setIdentifier(data.utilisateur.identifiant)

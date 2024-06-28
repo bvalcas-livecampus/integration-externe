@@ -42,7 +42,7 @@ const Account = () => {
         // On vérifie si un utilisateur est déjà connecté
         if (token) {
             setIsLoading(true)
-            api( "POST", "verify", {jeton: token})
+            api( "POST", "verify")
                 .then(response => {
                     // L'utilisateur est connecté, on récupère l'id de l'utilisateur
                     if (response.id) {
