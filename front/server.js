@@ -2,14 +2,28 @@ const express = require('express');
 const app = express();
 const cors = require('cors')
 const bodyParser = require('body-parser');
+let session = require('express-session')
+var FileStore = require('session-file-store')(session);
+const jwt = require('jsonwebtoken');
+
+require('dotenv').config()
 
 const sqlite3 = require('sqlite3').verbose();
+
+app.use(cors())
 
 app.use(bodyParser.urlencoded({
     extended: true
 }));
 
-app.use(cors())
+var fileStoreOptions = {};
+
+app.use(session({
+    store: new FileStore(fileStoreOptions),
+    secret: process.env.SECRET_KEY_SESSION,
+    resave: true,
+    cookie: { maxAge: 1000 * 60 * 20 },
+}))
 
 try {
     app.use(bodyParser.json());
@@ -36,21 +50,68 @@ app.listen(3001, () => {
  * @return {Promise<any>}
  * @throws {Error}
  */
-const auth = async (method, action, body, params = "", headers = {}) => {
-    const response = await fetch(`http://localhost:3000/${action}${params}`, {
-        method,
-        headers: {
-            "Content-Type": "application/json",
-            ...headers
-        },
-        body: JSON.stringify(body),
-    });
-    const responseJson = await response.json();
+const auth = async (req, method, action, body, params = "", headers = {}) => {
+    let response = {}
+    let responseJson = {}
+    try {
+        response = await fetch(`http://localhost:3000/${action}${params}`, {
+            method,
+            headers: {
+                "Content-Type": "application/json",
+                ...headers
+            },
+            body: JSON.stringify(body),
+        });
+        responseJson = await response.json()
+    } catch (e) {
+        if (req.session.token) {
+            response.status = 200;
+            responseJson.status = "Succès"
+            responseJson.message = "Token valide";
+            responseJson.utilisateur = {
+                identifiant: await expTokenVerification(req.session.token)
+            }
+        } else {
+            response.status = 500;
+            responseJson.message = e;
+        }
+    }
     if (response.status === 200 || response.status === 201) {
         return responseJson;
     } else {
         throw new Error(responseJson.message);
     }
+}
+
+
+/**
+ * Cette fonction permet de vérifier si un token est valide
+ * @param {string} jeton - Le token JWT à vérifier
+ * @throws {Promise<Error>} Si le token est invalide ou si l'utilisateur n'est pas trouvé
+ * @return {Promise<string>} Une promesse qui résout avec l'identifiant du compte
+ */
+function expTokenVerification(jeton) {
+    return new Promise((resolve, reject) => {
+        try {
+            const token = jwt.verify(jeton, process.env.SECRET_KEY_AUTH);
+
+            if (!token.iat || !token.exp || !token.identifiant) {
+                return reject(new Error("Element manquant dans le token"));
+            }
+            if (token.iat > Date.now() / 1000) {
+                return reject(new Error("La date de création doit être inférieure à l'heure actuelle"));
+            }
+            if (token.exp < Date.now() / 1000) {
+                return reject(new Error("La date d'expiration doit être supérieure à l'heure actuelle"));
+            }
+            if (token.iat > token.exp) {
+                return reject(new Error("La date d'expiration doit être supérieure à la date de création"));
+            }
+            resolve(token.identifiant);
+        } catch (error) {
+            reject(new Error("Échec de la vérification du token : " + error.message));
+        }
+    });
 }
 
 /**
@@ -68,7 +129,7 @@ const auth = async (method, action, body, params = "", headers = {}) => {
 app.post('/register', async (req, res) => {
     const {identifiant, motdepasse} = req.body;
     if (identifiant && motdepasse) {
-        auth("POST", "register", {identifiant, motdepasse})
+        auth(req, "POST", "register", {identifiant, motdepasse})
             .then((response) => {
                 res.status(200).send(response);
             }).catch((error) => {
@@ -97,8 +158,9 @@ app.post('/register', async (req, res) => {
 app.post('/login', async (req, res) => {
     const {identifiant, motdepasse} = req.body;
     if (identifiant && motdepasse) {
-        auth("POST", "login", {identifiant, motdepasse})
+        auth(req, "POST", "login", {identifiant, motdepasse})
             .then((response) => {
+                req.session.token = response.message;
                 res.status(200).send(response);
             }).catch((error) => {
             res.status(401).send({status: "Erreur", message: error.message});
@@ -119,14 +181,15 @@ app.post('/login', async (req, res) => {
  *   } >
  */
 app.get('/logout', async (req, res) => {
-    const {token} = req.headers;
+    const {token} = req.query;
     if (token) {
-        auth("GET", "logout", {token})
-            .then((response) => {
-                res.status(200).send(response);
-            }).catch((error) => {
-            res.status(401).send({status: "Erreur", message: error.message});
-        });
+        req.session.destroy((err) => {
+            if (err) {
+                res.status(500).send({status: "Erreur", message: "Une erreur est survenue"});
+            } else {
+                res.status(200).send({status: "Succès", message: "Vous avez été déconnecté"});
+            }
+        })
     } else {
         res.status(401).send({status: "Erreur", message: "Jeton inconnu"});
     }
@@ -148,9 +211,13 @@ app.get('/logout', async (req, res) => {
  * }
  * >}
  */
-async function verify(token) {
+async function verify(token, req) {
     if (token) {
-        return auth("POST", "verify", {}, "", {token: token})
+        try {
+            return auth(req, "POST", "verify", {}, "", { token: token })
+        } catch (e) {
+            console.log("erreur verify", e)
+        }
     } else {
         throw new Error("Token manquant")
     }
@@ -176,7 +243,7 @@ async function verify(token) {
 app.post('/verify', async (req, res) => {
     const {token} = req.headers;
     if (token) {
-        verify(token)
+        verify(token, req)
             .then((response) => {
                 res.status(200).send(response);
             }).catch((error) => {
@@ -206,7 +273,7 @@ app.patch('/update', async (req, res) => {
      * @param value {string} La nouvelle valeur du champ
      */
     const update = (field, value) => {
-        verify(token)
+        verify(token, req)
             .then(() => {
                 let updateData = {};
                 if (field === 'identifiant') {
@@ -214,7 +281,7 @@ app.patch('/update', async (req, res) => {
                 } else if (field === 'motdepasse') {
                     updateData = {motdepasse: value};
                 }
-                auth("PATCH", "update", updateData, `?id=${id}`)
+                auth(req, "PATCH", "update", updateData, `?id=${id}`)
                     .then((response) => {
                         res.status(200).send(response);
                     }).catch((error) => {
@@ -336,7 +403,7 @@ const openData = async (limit, offset) => {
 app.get('/stations', async (req, res) => {
     const {token} = req.headers;
 
-    verify(token)
+    verify(token, req)
         .then(async () => {
             let allStation = [];
             let offset = 0;
@@ -378,7 +445,7 @@ app.post('/itinerary', async (req, res) => {
     const {token} = req.headers;
 
     try {
-        await verify(token);
+        await verify(token, req);
     } catch (e) {
         res.status(401).send({status: "Erreur", message: e.message});
         return;
@@ -450,7 +517,7 @@ app.get("/itinerary", async (req, res) => {
     const {token} = req.headers;
 
     try {
-        await verify(token);
+        await verify(token, req);
     } catch (e) {
         res.status(401).send({status: "Erreur", message: e.message});
         return;
@@ -534,7 +601,7 @@ app.delete("/itinerary/:id", async (req, res) => {
     const {token} = req.headers;
 
     try {
-        await verify(token);
+        await verify(token, req);
     } catch (e) {
         res.status(401).send({status: "Erreur", message: e.message});
         return;
