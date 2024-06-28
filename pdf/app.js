@@ -140,7 +140,7 @@ app.post('/itinerary', async (req, res) => {
         let sql = req.db.prepare("UPDATE pdf set status = 'Error' WHERE id_itineraire = ?", [itinerary])
         sql.run((err) => {
             if (err){
-                console.error('Une erreure est survenue lors de la maj du status du pdf dans la bdd : ' + err);
+                console.error('Une erreur est survenue lors de la maj du status du pdf dans la bdd : ' + err);
                 return ;
             }
             console.log("Status du pdf mis à jour");
