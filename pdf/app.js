@@ -34,7 +34,7 @@ app.use((req, res, next) => {
         req.db.run("CREATE TABLE IF NOT EXISTS pdf (\
             id_itineraire integer NOT NULL, \
             url VARCHAR(255) NOT NULL, \
-            status boolean NOT NULL,\
+            status varchar(10) NOT NULL,\
             PRIMARY KEY (id_itineraire) )");
     
         next();
@@ -104,7 +104,7 @@ app.post('/itinerary', async (req, res) => {
     };
     htmlPDF.setOptions(options);
 
-    let sql = req.db.prepare("INSERT INTO pdf VALUES (?, ?, ?)", [itinerary, url, 0])
+    let sql = req.db.prepare("INSERT INTO pdf VALUES (?, ?, ?)", [itinerary, url, "Creating"])
     sql.run((err) => {
         if (err){
             console.error('Une erreure est survenue lors de l\'ajout du pdf dans la bdd : ' + err);
@@ -126,7 +126,7 @@ app.post('/itinerary', async (req, res) => {
 
     try {
         await htmlPDF.create(content)
-        let sql = req.db.prepare("UPDATE pdf set status = 1 WHERE id_itineraire = ?", [itinerary])
+        let sql = req.db.prepare("UPDATE pdf set status = 'Finished' WHERE id_itineraire = ?", [itinerary])
         sql.run((err) => {
             if (err){
                 console.error('Une erreure est survenue lors de la maj du status du pdf dans la bdd : ' + err);
@@ -137,12 +137,20 @@ app.post('/itinerary', async (req, res) => {
         })
     } catch (error){
         console.log("Erreur lors de la création de pdf : ", error)
+        let sql = req.db.prepare("UPDATE pdf set status = 'Error' WHERE id_itineraire = ?", [itinerary])
+        sql.run((err) => {
+            if (err){
+                console.error('Une erreure est survenue lors de la maj du status du pdf dans la bdd : ' + err);
+                return ;
+            }
+            console.log("Status du pdj mis à jour");
+            sql.finalize();
+        })
     }
 })
 
 // récupération du pdf
 app.get('/itinerary', async (req, res) => {
-    const token = req.body;
     const id = req.query.id;
 
     let sql = req.db.prepare("SELECT url FROM pdf WHERE id_itineraire = ?", [id])
@@ -159,6 +167,7 @@ app.get('/itinerary', async (req, res) => {
             res.send({ status: "Erreur", message: "Le pdf n'existe pas." })
             return ;
         }
+        
         res.download(result.url, 'itineraire.pdf', (err) => {
             if (err) {
                 res.status(402);
@@ -166,7 +175,6 @@ app.get('/itinerary', async (req, res) => {
                 res.send({status : "Erreur", message : "Erreur lors du téléchargement"});
                 return
             }
-            res.status(204);
         });
     })
 })
