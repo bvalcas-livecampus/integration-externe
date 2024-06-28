@@ -1,5 +1,5 @@
 type ErrorProps = {
-    errorMessage: string | null
+    errorMessage?: string | null
 }
 
 const Error = ({errorMessage}: ErrorProps) => {
@@ -7,9 +7,7 @@ const Error = ({errorMessage}: ErrorProps) => {
         return <></>
     }
     return (
-        <span className="flex items-center font-medium tracking-wide text-red-500 text-xs mt-1 ml-1">
-			    {errorMessage}
-        </span>
+        <span className="flex items-center font-medium tracking-wide text-red-500 text-xs mt-1 ml-1">{errorMessage}</span>
     )
 }
 

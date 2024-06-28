@@ -212,11 +212,7 @@ app.get('/logout', async (req, res) => {
  */
 async function verify(token, req) {
     if (token) {
-        try {
-            return auth(req, "POST", "verify", {}, "", { token: token })
-        } catch (e) {
-            console.log("erreur verify", e)
-        }
+        return auth(req, "POST", "verify", {}, "", { token: token })
     } else {
         throw new Error("Token manquant")
     }
@@ -394,7 +390,7 @@ app.use((req, res, next) => {
  *  } | Error>
  */
 const openData = async (limit, offset) => {
-    const response = await fetch(`https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/velib-disponibilite-en-temps-reel/records?limit=${limit}&offset=${offset}`, {
+    const response = await fetch(`https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/velib-disponibilite-en-temps-reel/records?limit=${limit}&offset=${offset}&refine=nom_arrondissement_communes%3AParis&exclude=is_renting%3ANON`, {
         method: "GET"
     });
     if (response.ok) {
@@ -510,8 +506,7 @@ app.post('/itinerary', async (req, res) => {
                     });
                 }))
 
-                res.status(201).send({status: "Succès", message: "Itinéraire enregistré"});
-                await fetch(`http://localhost:3002/itinerary`, {
+                fetch(`http://localhost:3002/itinerary`, {
                     method : 'POST',
                     headers: {
                         "Content-Type": "application/json",
@@ -519,6 +514,7 @@ app.post('/itinerary', async (req, res) => {
                     body: JSON.stringify({itinerary : newItineraryId, name : name, points : points}),
                 });
 
+                res.status(201).send({status: "Succès", message: "Itinéraire enregistré"});
             });
         } else {
             res.status(400).send({

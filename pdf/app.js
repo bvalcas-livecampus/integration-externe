@@ -117,10 +117,13 @@ app.post('/itinerary', async (req, res) => {
     let content = "<h1>" + name + "</h1>"
 
     res.status(204).send({statut: "Succès", message: ''});
-    
-    await Promise.all(points.map( async (coordinates) => {
+
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+    await Promise.all(points.map( async (coordinates, index) => {
+        await delay(((index + 1) / 50) * 1000);
         const info = await api_adresse(coordinates["lon"], coordinates['lat'])
-        content = content + "<p>Aller à " + info.features[0].properties.street + "</p>";
+        content = content + "<p>Allez à " + info.features[0].properties.label + "</p>";
     }));
 
     try {

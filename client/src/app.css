@@ -1,10 +1,7 @@
 #map-all-stations {
-    position: absolute !important;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    height: 600px;
+    height: 420px;
     max-height: 80%;
-    width: 600px;
+    width: 420px;
     max-width: 100%;
 }
+
