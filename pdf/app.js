@@ -116,8 +116,7 @@ app.post('/itinerary', async (req, res) => {
     
     let content = "<h1>" + name + "</h1>"
 
-    res.status(204);
-    res.send();
+    res.status(204).send({statut: "Succès", message: ''});
     
     await Promise.all(points.map( async (coordinates) => {
         const info = await api_adresse(coordinates["lon"], coordinates['lat'])
