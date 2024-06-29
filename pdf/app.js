@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors')
 const app = express();
 const fs = require('fs');
+const path = require('path');
 const PuppeteerHTMLPDF = require("puppeteer-html-pdf");
 
 const sqlite3 = require('sqlite3').verbose();
@@ -113,6 +114,20 @@ app.post('/itinerary', async (req, res) => {
     const {itinerary, name, points, image} = req.body;
     if (itinerary && name && points && image) {
         const htmlPDF = new PuppeteerHTMLPDF();
+        try {
+            const dirPath = path.join(__dirname, 'public');
+            fs.mkdir(dirPath, { recursive: true }, (err) => {
+                if (err) {
+                    throw new Error('Error creating directory:', err);
+                }
+            });
+        } catch (e) {
+            res.status(400).send({
+                statut: "Erreur",
+                Message: "Une erreure est survenue lors de l'ajout du pdf : " + err
+            })
+            return ;
+        }
         const url = `./public/` + itinerary + ' - ' + name + '.pdf';
         const options = {
             format: "A4",
@@ -149,7 +164,9 @@ app.post('/itinerary', async (req, res) => {
         content += `<img src="${image}" style="width: 100%; height: auto;" />`;
 
         try {
-            await htmlPDF.create(content)
+            await htmlPDF.create(content, (error) => {
+                console.log("error ", error)
+            })
             let sql = req.db.prepare("UPDATE pdf set status = 'Finished' WHERE id_itineraire = ?", [itinerary])
             sql.run((err) => {
                 if (err) {
