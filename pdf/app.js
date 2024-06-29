@@ -226,14 +226,13 @@ app.get('/itinerary', async (req, res) => {
                             message: "Une erreur est survenue lors de la création du pdf"
                         });
                     } else {
-                        res.type('application/pdf')
                         const data = fs.readFileSync(result.url);
-                        res.writeHead(200, {
-                            'Content-Type': 'application/pdf',
-                            'Content-disposition': 'attachment;filename=' + result.url,
-                            'Content-Length': data.length
+                        const base64Data = Buffer.from(data).toString('base64');
+                        res.status(200).json({
+                            statut: "Succès",
+                            pdfBase64: base64Data,
+                            pdfName: result.url
                         });
-                        res.end(Buffer.from(data));
                     }
                 } else {
                     res.status(404).json({statut: "Erreur", message: "Le pdf n'existe pas"});

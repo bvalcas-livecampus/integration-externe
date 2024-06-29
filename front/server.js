@@ -589,12 +589,13 @@ app.get("/itineraries", async (req, res) => {
 
             if (response.ok) {
                 const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/pdf')) {
-                    itinerary.pdf = atob(Buffer.from(await response.arrayBuffer()).toString('base64'));
-                } else if (contentType && contentType.includes('application/json')) {
+                if (contentType && contentType.includes('application/json')) {
                     const data = await response.json();
                     itinerary.status = data.status;
                     itinerary.message = data.message;
+                    if (data.pdfBase64) {
+                        itinerary.pdf = data.pdfBase64;
+                    }
                 } else {
                     itinerary.status = "Erreur";
                     itinerary.message = "Type de contenu inconnu";

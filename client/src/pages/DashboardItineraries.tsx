@@ -22,14 +22,21 @@ const ItinerariesComponent = () => {
 
     const handleDownloadPdf = (pdfBase64, pdfName) => {
         try {
-            const blob = new Blob(pdfBase64.data, { type: 'application/pdf' }); // Crée un Blob à partir des octets
-            const url = URL.createObjectURL(blob); // Crée une URL temporaire pour le Blob
+            const byteCharacters = atob(pdfBase64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
             link.setAttribute('download', pdfName);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Erreur lors du téléchargement du PDF : ', error);
         }
