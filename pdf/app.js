@@ -164,9 +164,7 @@ app.post('/itinerary', async (req, res) => {
         content += `<img src="${image}" style="width: 100%; height: auto;" />`;
 
         try {
-            await htmlPDF.create(content, (error) => {
-                console.log("error ", error)
-            })
+            await htmlPDF.create(content)
             let sql = req.db.prepare("UPDATE pdf set status = 'Finished' WHERE id_itineraire = ?", [itinerary])
             sql.run((err) => {
                 if (err) {
