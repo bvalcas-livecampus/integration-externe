@@ -8,8 +8,8 @@ Sujet Intégration Externe
 ## Le projet est constitué de 4 dossiers
 - authentification
 - client
-- front
 - pdf
+- front
 
 # authentification
 Il s'agit du serveur back-end qui s'occupe de l'authentification
