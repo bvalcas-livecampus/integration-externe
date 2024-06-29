@@ -10,18 +10,16 @@ require('dotenv').config()
 
 const sqlite3 = require('sqlite3').verbose();
 
-app.use(cors({ credentials: true, origin: "http://localhost:5173" /* pour le site en dev */ || "*" /* pour PostMan */ }))
+app.use(cors({credentials: true, origin: "http://localhost:5173" /* pour le site en dev */ || "*" /* pour PostMan */}))
 
 app.use(bodyParser.urlencoded({
     extended: true
 }));
 
-var fileStoreOptions = {};
-
 app.use(session({
-    store: new FileStore(fileStoreOptions),
+    store: new FileStore({}),
     secret: process.env.SECRET_KEY_SESSION,
-    cookie: { maxAge: 1000 * 60 * 20, sameSite: "none" },
+    cookie: {maxAge: 1000 * 60 * 20, sameSite: "none"},
 }))
 
 try {
@@ -215,7 +213,7 @@ app.get('/logout', async (req, res) => {
  */
 async function verify(token, req) {
     if (token) {
-        return await auth(req, "POST", "verify", {}, "", { token: token })
+        return await auth(req, "POST", "verify", {}, "", {token: token})
     } else {
         throw new Error("Token manquant")
     }
@@ -245,7 +243,7 @@ app.post('/verify', async (req, res) => {
             .then((response) => {
                 res.status(200).send(response);
             }).catch((error) => {
-                console.log("error", error.message)
+            console.log("error", error.message)
             res.status(401).send({status: "Erreur", message: error.message});
         });
     } else {
@@ -463,7 +461,7 @@ app.post('/itinerary', async (req, res) => {
                 let newItineraryId = this.lastID;
                 sql.finalize();
 
-                await Promise.all(points.map( async (point) => {
+                await Promise.all(points.map(async (point) => {
                     let stepSql = req.db.prepare("INSERT INTO itinerary_route (itinerary_id, lon, lat) VALUES (?, ?, ?)");
                     stepSql.run([newItineraryId, point.lon, point.lat], (err) => {
                         if (err) {
@@ -479,11 +477,11 @@ app.post('/itinerary', async (req, res) => {
                 }))
 
                 fetch(`http://localhost:3002/itinerary`, {
-                    method : 'POST',
+                    method: 'POST',
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({itinerary : newItineraryId, name, points, image}),
+                    body: JSON.stringify({itinerary: newItineraryId, name, points, image}),
                 });
 
                 res.status(201).send({status: "Succès", message: "Itinéraire enregistré"});
@@ -522,95 +520,107 @@ app.post('/itinerary', async (req, res) => {
  *  }
  * >}
  */
-app.get("/itinerary", async (req, res) => {
+app.get("/itineraries", async (req, res) => {
     const {token} = req.headers;
 
     try {
         const result = await verify(token, req);
         const identifier = result.utilisateur.identifiant;
 
-        if(req.query.id){
+        if (!identifier) {
+            res.status(400).send({status: "Erreur", message: "L'identifiant n'est pas défini"});
+            return;
+        }
 
-            const response = await fetch(`http://localhost:3002/itinerary?id=` + req.query.id, {
-                method : 'GET',
+        const sql = `
+            SELECT it.id AS itinerary_id,
+                   it.identifier,
+                   it.name,
+                   ir.id AS step_id,
+                   ir.lon,
+                   ir.lat
+            FROM itinerary it
+                     LEFT JOIN itinerary_route ir ON it.id = ir.itinerary_id
+            WHERE it.identifier = ?
+        `;
+
+        const rows = await new Promise((resolve, reject) => {
+            req.db.all(sql, [identifier], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+
+        const itineraries = []
+
+        if (rows.length === 0) {
+            res.status(404).send({status: "Erreur", message: "Aucun itinéraire trouvé pour cet identifiant"});
+            return;
+        }
+
+        let itinerary = {
+            identifier: rows[0].identifier,
+            name: rows[0].name,
+            steps: []
+        };
+        let previousItineraryId = rows[0].itinerary_id
+
+        for (const row of rows) {
+            if (previousItineraryId !== row.itinerary_id) {
+                itineraries.push(itinerary);
+                itinerary = {
+                    identifier: row.identifier,
+                    name: row.name,
+                    steps: []
+                };
+            }
+            previousItineraryId = row.itinerary_id
+            const response = await fetch(`http://localhost:3002/itinerary?id=` + row.itinerary_id, {
+                method: 'GET',
                 headers: {
                     "Content-Type": "application/json",
                 }
             });
 
-            const itineraire_base64 = (await response.json()).message;
-            res.type('application/pdf')
-            res.header('Content-Disposition', 'attachment; filename="itineraire.pdf"')
-            res.send(Buffer.from(itineraire_base64, 'base64'))
-            return
-
-        }else{
-            
-            const sql = `
-                SELECT it.id AS itinerary_id,
-                    it.identifier,
-                    it.name,
-                    ir.id AS step_id,
-                    ir.lon,
-                    ir.lat,
-                    ir.route_index
-                FROM itinerary it
-                        LEFT JOIN
-                    itinerary_route ir ON it.id = ir.itinerary_id
-                WHERE it.identifier = ?
-            `;
-
-            try {
-                const rows = await new Promise((resolve, reject) => {
-                    req.db.all(sql, [identifier], (err, rows) => {
-                        if (err) reject(err);
-                        else resolve(rows);
-                    });
-                });
-
-                if (rows.length === 0) {
-                    res.status(404).send({status: "Erreur", message: "Aucun itinéraire trouvé pour cet identifiant"});
-                    return;
+            if (response.ok) {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/pdf')) {
+                    const pdfBuffer = await response.arrayBuffer();
+                    itinerary.pdf = Buffer.from(pdfBuffer);
+                } else if (contentType && contentType.includes('application/json')) {
+                    const data = await response.json();
+                    itinerary.status = data.status;
+                    itinerary.message = data.message;
+                } else {
+                    itinerary.status = "Erreur";
+                    itinerary.message = "Type de contenu inconnu";
                 }
+            } else {
+                itinerary.status = "Erreur";
+                itinerary.message = "Une erreur est survenue lors de la récupération du pdf";
+            }
 
-                let itinerary = {
-                    identifier: rows[0].identifier,
-                    name: rows[0].name,
-                    steps: [],
-                };
+            itinerary.steps.push({
+                lon: row.lon,
+                lat: row.lat
+            });
 
-                for (const row of rows) {
-                    const response = await fetch(`https://api-adresse.data.gouv.fr/reverse/?lon=${row.lon}&lat=${row.lat}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.features.length > 0) {
-                            const address = data.features[0].properties.label;
-                            itinerary.steps.push({
-                                lon: row.lon,
-                                lat: row.lat,
-                                route_index: row.route_index,
-                                address,
-                            });
-                        }
-                    }
-                }
-
-                res.send({status: "Succès", itinerary});
-
-            } catch (error) {
-                console.error(error);
-                res.status(400).send({
-                    status: "Erreur",
-                    message: "Une erreur est survenue lors de la récupération des itinéraires"
-                });
+            if (rows.indexOf(row) === rows.length - 1) {
+                itineraries.push(itinerary);
             }
         }
-    } catch (e) {
-        console.log(e)
-        res.status(401).send({status: "Erreur", message: e.message});
-        return;
+
+        res.status(200).send({status: "Succès", itineraries});
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({
+            status: "Erreur",
+            message: "Une erreur est survenue lors de la récupération des itinéraires"
+        });
     }
 });
+
 
 /**
  * Cette route permet de supprimer un itinéraire en fonction de son identifiant

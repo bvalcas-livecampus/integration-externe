@@ -22,24 +22,34 @@ try {
     }));
 } catch {
     app.status(400)
-    res.send({ statut: "Erreur", message: "JSON incorrect" });
-    return ;
+    res.send({statut: "Erreur", message: "JSON incorrect"});
+    return;
 }
+
+const db = new sqlite3.Database('itineraire_pdf', (err) => {
+    if (err) {
+        console.error('Erreur lors de la connexion à la base de données:', err.message);
+    } else {
+        // Création de la table "pdf" si elle n'existe pas
+        db.run(`CREATE TABLE IF NOT EXISTS pdf (
+            id_itineraire INTEGER PRIMARY KEY NOT NULL,
+            url VARCHAR(255) NOT NULL,
+            status VARCHAR(10) NOT NULL
+            )`, (err) => {
+            if (err) {
+                console.error('Erreur lors de la création de la table pdf:', err.message);
+            } else {
+                console.log('Table "pdf" créée avec succès.');
+            }
+        });
+    }
+});
+
 app.use((req, res, next) => {
-    // S'il y a déjà une variable req.db, on continue
-    // Il n'y a pas de raison.
-    if(req.db) {
+    if (req.db) {
         next();
     } else {
-        req.db = new sqlite3.Database('pdf');
-        
-        // Creation de la table compte si elle n'existe pas
-        req.db.run("CREATE TABLE IF NOT EXISTS pdf (\
-            id_itineraire integer NOT NULL, \
-            url VARCHAR(255) NOT NULL, \
-            status varchar(10) NOT NULL,\
-            PRIMARY KEY (id_itineraire) )");
-    
+        req.db = db;
         next();
     }
 });
@@ -48,39 +58,34 @@ app.use((req, res, next) => {
  * Cette fonction permet de récupérer les données de l'api adresse
  * @param lon {number}
  * @param lat {number}
- * @return {Promise<
-*  {
-*   "type":"FeatureCollection",
-*   "version":"draft",
-*   "features":[
-*   {
-*       "type":"Feature",
-*       "geometry":{
-*           "type":"Point",
-*           "coordinates":[
-*               2.290084,
-*               49.897443
-*           ]
-*       },
-*       "properties":{
-*           "label":"8 Boulevard du Port 80000 Amiens",
-*           "score":0.49159121588068583,
-*           "housenumber":"8",
-*           "id":"80021_6590_00008",
-*           "type":"housenumber",
-*           "name":"8 Boulevard du Port",
-*           "postcode":"80000",
-*           "citycode":"80021",
-*           "x":648952.58,
-*           "y":6977867.25,
-*           "city":"Amiens",
-*           "context":"80, Somme, Hauts-de-France",
-*           "importance":0.6706612694243868,
-*           "street":"Boulevard du Port"
-*       }
-*   }
-*  } | Error>
-*/
+ * @throws {Error}
+ * @return {Promise<{
+ *     type: "FeatureCollection",
+ *     version: "draft",
+ *     features: Array<{
+ *       type: "Feature",
+ *       geometry: {
+ *         type: "Point",
+ *         coordinates: [number, number]
+ *       },
+ *      properties: {
+ *         label: string,
+ *         score: number,
+ *         housenumber: string,
+ *         id: string,
+ *         type: string,
+ *         name: string,
+ *         postcode: string,
+ *         citycode: string,
+ *         x: number,
+ *         y: number,
+ *         city: string,
+ *         context: string,
+ *         importance: number,
+ *         street: string
+ *       }
+ *     }>
+ */
 const api_adresse = async (lon, lat) => {
     const response = await fetch(`https://api-adresse.data.gouv.fr/reverse/?lon=${lon}&lat=${lat}`, {
         method: "GET"
@@ -88,99 +93,138 @@ const api_adresse = async (lon, lat) => {
     if (response.ok) {
         const responseJson = await response.json();
         return responseJson;
-    }
-    else {
+    } else {
         const responseJson = await response.json();
         throw new Error(responseJson.message);
     }
 }
 
-
-// creation du pdf
+/**
+ * Cette route permet de créer un pdf
+ * @req La requête
+ * @res La réponse
+ * @req.body {Object} Les données de la requête.
+ * @req.body.itinerary {number} L'id de l'itinéraire
+ * @req.body.name {string} Le nom de l'itinéraire
+ * @req.body.points {Array<{lon: number, lat: number}>} Les points de l'itinéraire
+ * @req.body.image {string} L'image de l'itinéraire
+ */
 app.post('/itinerary', async (req, res) => {
     const {itinerary, name, points, image} = req.body;
-    const htmlPDF = new PuppeteerHTMLPDF();
-    const url = `./public/` + itinerary + ' - ' + name + '.pdf';
-    const options = {
-        format: "A4",
-        path: url, 
-    };
-    htmlPDF.setOptions(options);
+    if (itinerary && name && points && image) {
+        const htmlPDF = new PuppeteerHTMLPDF();
+        const url = `./public/` + itinerary + ' - ' + name + '.pdf';
+        const options = {
+            format: "A4",
+            path: url,
+        };
+        await htmlPDF.setOptions(options);
 
-    let sql = req.db.prepare("INSERT INTO pdf VALUES (?, ?, ?)", [itinerary, url, "Creating"])
-    sql.run((err) => {
-        if (err){
-            console.error('Une erreure est survenue lors de l\'ajout du pdf dans la bdd : ' + err);
-            return ;
+        let sql = req.db.prepare("INSERT INTO pdf VALUES (?, ?, ?)", [itinerary, url, "Creating"])
+        sql.run((err) => {
+            if (err) {
+                console.error('Une erreure est survenue lors de l\'ajout du pdf dans la bdd : ' + err);
+                res.status(400).send({
+                    statut: "Erreur",
+                    Message: "Une erreure est survenue lors de l'ajout du pdf : " + err
+                })
+                return;
+            }
+            console.log("Pdf ajouté à la bdd");
+            sql.finalize();
+        })
+
+        let content = "<h1>" + name + "</h1>"
+
+        res.status(204).send({statut: "Succès", message: ''});
+
+        const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+        await Promise.all(points.map(async (coordinates, index) => {
+            await delay(((index + 1) / 50) * 1000);
+            const info = await api_adresse(coordinates["lon"], coordinates['lat'])
+            content += "<p>Allez à " + info.features[0].properties.label + "</p>";
+        }));
+
+        content += `<img src="${image}" style="width: 100%; height: auto;" />`;
+
+        try {
+            await htmlPDF.create(content)
+            let sql = req.db.prepare("UPDATE pdf set status = 'Finished' WHERE id_itineraire = ?", [itinerary])
+            sql.run((err) => {
+                if (err) {
+                    console.error('Une erreur est survenue lors de la maj du status du pdf dans la bdd : ' + err);
+                    return;
+                }
+                console.log("Status du pdj mis à jour");
+                sql.finalize();
+            })
+        } catch (error) {
+            console.log("Erreur lors de la création de pdf : ", error)
+            let sql = req.db.prepare("UPDATE pdf set status = 'Error' WHERE id_itineraire = ?", [itinerary])
+            sql.run((err) => {
+                if (err) {
+                    console.error('Une erreur est survenue lors de la maj du status du pdf dans la bdd : ' + err);
+                    return;
+                }
+                console.log("Status du pdf mis à jour");
+                sql.finalize();
+            })
         }
-        console.log("Pdf ajouté à la bdd");
-        sql.finalize();
-    })
-    
-    let content = "<h1>" + name + "</h1>"
-
-    res.status(204).send({statut: "Succès", message: ''});
-
-    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-    await Promise.all(points.map( async (coordinates, index) => {
-        await delay(((index + 1) / 50) * 1000);
-        const info = await api_adresse(coordinates["lon"], coordinates['lat'])
-        content = content + "<p>Allez à " + info.features[0].properties.label + "</p>";
-    }));
-
-    content += `<img src="${image}" style="width: 100%; height: auto;" />`;
-
-    try {
-        await htmlPDF.create(content)
-        let sql = req.db.prepare("UPDATE pdf set status = 'Finished' WHERE id_itineraire = ?", [itinerary])
-        sql.run((err) => {
-            if (err){
-                console.error('Une erreure est survenue lors de la maj du status du pdf dans la bdd : ' + err);
-                return ;
-            }
-            console.log("Status du pdj mis à jour");
-            sql.finalize();
-        })
-    } catch (error){
-        console.log("Erreur lors de la création de pdf : ", error)
-        let sql = req.db.prepare("UPDATE pdf set status = 'Error' WHERE id_itineraire = ?", [itinerary])
-        sql.run((err) => {
-            if (err){
-                console.error('Une erreur est survenue lors de la maj du status du pdf dans la bdd : ' + err);
-                return ;
-            }
-            console.log("Status du pdf mis à jour");
-            sql.finalize();
-        })
+    } else {
+        res.status(400).send({statut: "Erreur", message: "Les paramètres ne sont pas définis"});
+        return;
     }
 })
 
-// récupération du pdf
+/**
+ * Cette route permet de récupérer un pdf
+ * @param id {number} : id de l'itinéraire
+ * @return {Promise<{status: string, message: string} | >}
+ */
 app.get('/itinerary', async (req, res) => {
     const id = req.query.id;
+    if (id) {
+        let sql = req.db.prepare("SELECT url, status FROM pdf WHERE id_itineraire = ?", [id])
+        sql.get(async (err, result) => {
+            if (err) {
+                console.error('Une erreure est survenue lors de la récupération du pdf dans la bdd : ' + err);
+                res.status(500).json({
+                    statut: "Erreur",
+                    Message: "Une erreure est survenue lors de la récupération du pdf : " + err
+                })
+                return;
+            }
 
-    let sql = req.db.prepare("SELECT url FROM pdf WHERE id_itineraire = ?", [id])
-    sql.get( async (err, result) => {
-        if (err){
-            console.error('Une erreure est survenue lors de la récupération du pdf dans la bdd : ' + err);
-            res.status(401);
-            res.send({statut : "Erreur", Message : "Une erreure est survenue lors de la récupération du pdf."})
-            return ;
-        }
-        if(!result.url || !fs.existsSync(result.url)) {
-            console.error("Le pdf n'existe pas");
-            res.status(401);
-            res.send({ status: "Erreur", message: "Le pdf n'existe pas." })
-            return ;
-        }
-        
-        res.status(200);
-        res.send({ statut : 'Succès', message : fs.readFileSync(result.url, {encoding: "base64"}) });
-    })
+            if (!result || !result.url || !fs.existsSync(result.url)) {
+                console.error("Le pdf n'existe pas");
+                res.status(404).json({status: "Erreur", message: "Le pdf n'existe pas."})
+                return;
+            } else {
+                const status = result.status;
+                if (status) {
+                    if (status === "Creating") {
+                        res.status(200).json({statut: "En cours", message: "Le pdf est en cours de création"});
+                    } else if (status === "Error") {
+                        res.status(500).json({
+                            statut: "Erreur",
+                            message: "Une erreur est survenue lors de la création du pdf"
+                        });
+                    } else {
+                        res.type('application/pdf')
+                        res.send(fs.readFileSync(result.url));
+                    }
+                } else {
+                    res.status(404).json({statut: "Erreur", message: "Le pdf n'existe pas"});
+                }
+            }
+        })
+    } else {
+        res.status(400).json({statut: "Erreur", message: "L'id n'est pas défini"});
+    }
 })
 
 
-var server = app.listen(3002, () => {
-    console.log("On écoute sur le port 3002");
+const server = app.listen(3002, () => {
+    console.log("Le serveur PDF écoute sur le port 3002");
 });
