@@ -106,13 +106,13 @@ function expTokenVerification(jeton, req) {
             if (!token.iat || !token.exp || !token.identifiant) {
                 return reject(new Error("Element manquant dans le token"));
             }
-            if (token.iat > Date.now() / 1000) {
+            if (new Date(token.iat) > new Date(Date.now())) {
                 return reject(new Error("La date de création doit être inférieure à l'heure actuelle"));
             }
-            if (token.exp < Date.now() / 1000) {
+            if (new Date(token.exp) < new Date(Date.now())) {
                 return reject(new Error("La date d'expiration doit être supérieure à l'heure actuelle"));
             }
-            if (token.iat > token.exp) {
+            if (new Date(token.iat) > new Date(token.exp)) {
                 return reject(new Error("La date d'expiration doit être supérieure à la date de création"));
             }
 
