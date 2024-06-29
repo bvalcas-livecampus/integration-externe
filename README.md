@@ -17,7 +17,7 @@ Pour chaque projet installer les modules
 npm install -y
 ```
 
-Puis lancer chanque projet séparément
+Puis lancer chaque projet séparément
 
 ```
 npm run start
