@@ -65,11 +65,15 @@ const auth = async (req, method, action, body, params = "", headers = {}) => {
         responseJson = await response.json()
     } catch (e) {
         if (req.session.token) {
+            if (headers.token != req.session.token) {
+                throw new Error("Le token est corrompu")
+            }
+            const identifiant = await expTokenVerification(headers.token)
             response.status = 200;
             responseJson.status = "Succès"
             responseJson.message = "Token valide";
             responseJson.utilisateur = {
-                identifiant: await expTokenVerification(req.session.token)
+                identifiant: identifiant
             }
         } else {
             response.status = 500;
@@ -98,13 +102,13 @@ function expTokenVerification(jeton) {
             if (!token.iat || !token.exp || !token.identifiant) {
                 return reject(new Error("Element manquant dans le token"));
             }
-            if (token.iat > Date.now() / 1000) {
-                return reject(new Error("La date de création doit être inférieure à l'heure actuelle"));
+            if (new Date(token.iat) > new Date(Date.now())) {
+                return reject(new Error("La date de création doit être inférieure à l'heure actuel"));
             }
-            if (token.exp < Date.now() / 1000) {
-                return reject(new Error("La date d'expiration doit être supérieure à l'heure actuelle"));
+            if (new Date(token.exp) < new Date(Date.now())) {
+                return reject(new Error("La date d'expiration doit être supérieure à l'heure actuel"));
             }
-            if (token.iat > token.exp) {
+            if (new Date(token.iat) > new Date(token.exp)) {
                 return reject(new Error("La date d'expiration doit être supérieure à la date de création"));
             }
             resolve(token.identifiant);
@@ -238,6 +242,7 @@ async function verify(token, req) {
  */
 app.post('/verify', async (req, res) => {
     const {token} = req.headers;
+
     if (token) {
         verify(token, req)
             .then((response) => {
