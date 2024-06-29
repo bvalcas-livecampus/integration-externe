@@ -11,6 +11,18 @@ Sujet Intégration Externe
 - pdf
 - front
 
+Pour chaque projet installer les modules
+
+```
+npm install -y
+```
+
+Puis lancer chanque projet séparément
+
+```
+npm run start
+```
+
 # authentification
 Il s'agit du serveur back-end qui s'occupe de l'authentification
 
