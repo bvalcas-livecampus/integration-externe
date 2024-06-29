@@ -1,9 +1,9 @@
 # integration-externe
 Sujet Intégration Externe
 
-Sergio GONZALEZ
-Cyril BARTZ
-Bryan VALCASARA
+- Sergio GONZALEZ
+- Cyril BARTZ
+- Bryan VALCASARA
 
 ## Le projet est constitué de 4 dossiers
 - authentification
