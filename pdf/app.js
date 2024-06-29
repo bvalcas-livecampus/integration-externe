@@ -212,7 +212,13 @@ app.get('/itinerary', async (req, res) => {
                         });
                     } else {
                         res.type('application/pdf')
-                        res.send(fs.readFileSync(result.url));
+                        const data = fs.readFileSync(result.url);
+                        res.writeHead(200, {
+                            'Content-Type': 'application/pdf',
+                            'Content-disposition': 'attachment;filename=' + result.url,
+                            'Content-Length': data.length
+                        });
+                        res.end(Buffer.from(data, 'binary'));
                     }
                 } else {
                     res.status(404).json({statut: "Erreur", message: "Le pdf n'existe pas"});

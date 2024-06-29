@@ -585,8 +585,7 @@ app.get("/itineraries", async (req, res) => {
             if (response.ok) {
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/pdf')) {
-                    const pdfBuffer = await response.arrayBuffer();
-                    itinerary.pdf = Buffer.from(pdfBuffer);
+                    itinerary.pdf = atob(Buffer.from(await response.arrayBuffer()).toString('base64'));
                 } else if (contentType && contentType.includes('application/json')) {
                     const data = await response.json();
                     itinerary.status = data.status;
