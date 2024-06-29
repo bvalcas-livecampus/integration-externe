@@ -233,7 +233,7 @@ app.get('/itinerary', async (req, res) => {
                             'Content-disposition': 'attachment;filename=' + result.url,
                             'Content-Length': data.length
                         });
-                        res.end(Buffer.from(data, 'binary'));
+                        res.end(Buffer.from(data));
                     }
                 } else {
                     res.status(404).json({statut: "Erreur", message: "Le pdf n'existe pas"});
