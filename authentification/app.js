@@ -29,7 +29,8 @@ const db = new sqlite3.Database('compte_itineraire', (err) => {
         console.error('Erreur lors de la connexion à la base de données:', err.message);
     } else {
         db.run(`CREATE TABLE IF NOT EXISTS compte (
-            identifiant VARCHAR(100) NOT NULL PRIMARY KEY, 
+            compte_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            identifiant VARCHAR(100) NOT NULL UNIQUE, 
             motdepasse VARCHAR(255) NOT NULL
         )`, (err) => {
             if (err) {
@@ -61,35 +62,42 @@ app.use((req, res, next) => {
  * }>
  */
 app.post('/register', async (req, res) => {
-    const {identifiant, motdepasse} = req.body;
+    const { identifiant, motdepasse } = req.body;
     if (identifiant && motdepasse) {
         bcrypt.hash(motdepasse, 10, (err, hash) => {
             if (err) {
-                console.error('Une erreure est survenue lors du hachage. Veuillez contacter l\'administrateur. Error :' + err);
+                console.error('Une erreur est survenue lors du hachage :', err);
                 res.status(500).send({
                     status: "Erreur",
-                    message: 'Une erreure est survenue lors du hachage. Veuillez contacter l\'administrateur.'
-                })
+                    message: 'Une erreur est survenue lors du hachage. Veuillez contacter l\'administrateur.'
+                });
                 return;
             }
-            let sql = req.db.prepare("INSERT INTO compte VALUES (?, ?)", [identifiant, hash])
-            sql.run((err) => {
+            // Insertion des données dans la table
+            let sql = 'INSERT INTO compte (identifiant, motdepasse) VALUES (?, ?)';
+            db.run(sql, [identifiant, hash], function (err) {
                 if (err) {
-                    console.error('Une erreur est survenue lors de l\'a création du compte : ' + err);
-                    res.status(500).send({status: "Erreur",
-                        message: 'Une erreur est survenue lors de l\'a création du compte ' + err
+                    console.error('Une erreur est survenue lors de la création du compte :', err.message);
+                    res.status(500).send({
+                        status: "Erreur",
+                        message: 'Une erreur est survenue lors de la création du compte.'
                     });
-                    return;
+                } else {
+                    console.log(`Compte enregistré avec l'ID ${this.lastID}`);
+                    res.status(200).send({
+                        status: "Succès",
+                        message: 'Compte enregistré avec succès.'
+                    });
                 }
-                console.log("Compte enregistré");
-                sql.finalize();
-                res.status(200).send({status: "Succès", message: 'Compte enregistré'})
-            })
-        })
+            });
+        });
     } else {
-        res.status(400).send({status: "Erreur", message: "L'identifiant ou le mot de passe n'est pas défini"});
+        res.status(400).send({
+            status: "Erreur",
+            message: "L'identifiant ou le mot de passe n'est pas défini."
+        });
     }
-})
+});
 
 /**
  * Cette fonction permet de vérifier si un token est valide
@@ -140,6 +148,38 @@ function expTokenVerification(jeton, req) {
         }
     });
 }
+
+/**
+ * Cette route permet de récupérer l'id d'un compte
+ * @param req {Object} La requête.
+ * @param res {Object} La réponse.
+ * @param req.query.identifiant {string} L'identifiant du compte.
+ * @return Promise<{
+ * status: string,
+ * message: string
+ * }>
+ */
+app.get("/compteId", (req, res) => {
+    const sql = req.db.prepare('SELECT compte_id FROM compte WHERE identifiant = ?');
+    const identifiant = req.query.identifiant;
+    if (!identifiant) {
+        res.status(400).send({status: "Erreur", message: "L'identifiant n'est pas défini"});
+        return;
+    }
+    sql.get([req.query.identifiant], (err, row) => {
+        if (err) {
+            console.error('Erreur sql :', err);
+            res.status(500).send({status: "Erreur", message: 'Erreur sql'})
+            return;
+        }
+        if (!row) {
+            console.error("Identifiants incorrects");
+            res.status(404).send({status: "Erreur", message: "Identifiants incorrects"})
+            return;
+        }
+        res.status(200).send({status: "Succès", message: row.compte_id})
+    });
+});
 
 /**
  * Cette route permet de se connecter
@@ -281,20 +321,20 @@ app.patch('/update', (req, res) => {
     if (!identifiant && motdepasse) {
         bcrypt.hash(motdepasse, 10, (err, hash) => {
             if (err) {
-                console.error('Une erreure est survenue lors du hachage. Veuillez contacter l\'administrateur. Error :' + err);
+                console.error('Une erreur est survenue lors du hachage. Veuillez contacter l\'administrateur. Error :' + err);
                 res.status(500).send({
                     status: "Erreur",
-                    message: 'Une erreure est survenue lors du hachage. Veuillez contacter l\'administrateur.'
+                    message: 'Une erreur est survenue lors du hachage. Veuillez contacter l\'administrateur.'
                 })
                 return;
             }
             let sql = req.db.prepare("UPDATE compte SET motdepasse = ? WHERE identifiant = ?", [hash, id])
             sql.run((err) => {
                 if (err) {
-                    console.error('Une erreure est survenue lors de la modification du compte : ' + err);
+                    console.error('Une erreur est survenue lors de la modification du compte : ' + err);
                     res.status(500).send({
                         status: "Erreur",
-                        message: 'Une erreure est survenue lors de la modification du compte'
+                        message: 'Une erreur est survenue lors de la modification du compte'
                     });
                     return;
                 }
@@ -307,10 +347,10 @@ app.patch('/update', (req, res) => {
         let sql = req.db.prepare("UPDATE compte SET identifiant = ? WHERE identifiant = ?", [identifiant, id])
         sql.run((err) => {
             if (err) {
-                console.error('Une erreure est survenue lors de la modification du compte : ' + err);
+                console.error('Une erreur est survenue lors de la modification du compte : ' + err);
                 res.status(500).send({
                     status: "Erreur",
-                    message: 'Une erreure est survenue lors de la modification du compte'
+                    message: 'Une erreur est survenue lors de la modification du compte'
                 });
                 return;
             }

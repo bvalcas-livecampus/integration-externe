@@ -437,6 +437,21 @@ app.get('/stations', async (req, res) => {
         });
 });
 
+const getId = async (identifier) =>  {
+    response = await fetch(`http://localhost:3000/compteId?identifiant=${identifier}`, {
+        method: 'GET',
+        headers: {
+            "Content-Type": "application/json",
+        }
+    });
+    responseJson = await response.json()
+    if (responseJson.status === "Succès") {
+        return responseJson.message;
+    } else {
+        return null;
+    }
+}
+
 /**
  * Cette route permet de créer un itinéraire
  * @return {Promise<{
@@ -452,45 +467,54 @@ app.post('/itinerary', async (req, res) => {
         const identifier = result.utilisateur.identifiant;
         const {name, points, image} = req.body;
         if (identifier && name && points && image) {
-            let sql = req.db.prepare("INSERT INTO itinerary (identifier, name) VALUES (?, ?)");
+            const id = await getId(identifier);
 
-            await sql.run([identifier, name], async function (err) {
-                if (err) {
-                    res.status(401).send({
-                        status: "Erreur",
-                        message: "Une erreur est survenue lors de la création de l'itinéraire"
+            if (id) {
+                let sql = req.db.prepare("INSERT INTO itinerary (identifier, name) VALUES (?, ?)");
+
+                await sql.run([id, name], async function (err) {
+                    if (err) {
+                        res.status(401).send({
+                            status: "Erreur",
+                            message: "Une erreur est survenue lors de la création de l'itinéraire"
+                        });
+                        return;
+                    }
+
+                    let newItineraryId = this.lastID;
+                    sql.finalize();
+
+                    await Promise.all(points.map(async (point) => {
+                        let stepSql = req.db.prepare("INSERT INTO itinerary_route (itinerary_id, lon, lat) VALUES (?, ?, ?)");
+                        stepSql.run([newItineraryId, point.lon, point.lat], (err) => {
+                            if (err) {
+                                console.log(err)
+                                res.status(401).send({
+                                    status: "Erreur",
+                                    message: "Une erreur est survenue lors de la création d'une étape de l'itinéraire'"
+                                });
+                                return;
+                            }
+                            stepSql.finalize();
+                        });
+                    }))
+
+                    fetch(`http://localhost:3002/itinerary`, {
+                        method: 'POST',
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({itinerary: newItineraryId, name, points, image}),
                     });
-                    return;
-                }
 
-                let newItineraryId = this.lastID;
-                sql.finalize();
-
-                await Promise.all(points.map(async (point) => {
-                    let stepSql = req.db.prepare("INSERT INTO itinerary_route (itinerary_id, lon, lat) VALUES (?, ?, ?)");
-                    stepSql.run([newItineraryId, point.lon, point.lat], (err) => {
-                        if (err) {
-                            console.log(err)
-                            res.status(401).send({
-                                status: "Erreur",
-                                message: "Une erreur est survenue lors de la création d'une étape de l'itinéraire'"
-                            });
-                            return;
-                        }
-                        stepSql.finalize();
-                    });
-                }))
-
-                fetch(`http://localhost:3002/itinerary`, {
-                    method: 'POST',
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({itinerary: newItineraryId, name, points, image}),
+                    res.status(201).send({status: "Succès", message: "Itinéraire enregistré"});
                 });
-
-                res.status(201).send({status: "Succès", message: "Itinéraire enregistré"});
-            });
+            } else {
+                res.status(401).send({
+                    status: "Erreur",
+                    message: "L'utilisateur n'existe pas"
+                });
+            }
         } else {
             res.status(400).send({
                 status: "Erreur",
@@ -499,7 +523,6 @@ app.post('/itinerary', async (req, res) => {
         }
     } catch (e) {
         res.status(401).send({status: "Erreur", message: e.message});
-        return;
     }
 });
 
@@ -537,6 +560,16 @@ app.get("/itineraries", async (req, res) => {
             return;
         }
 
+        const id = await getId(identifier);
+
+        if (!id) {
+            res.status(401).send({
+                status: "Erreur",
+                message: "L'utilisateur n'existe pas"
+            });
+            return;
+        }
+
         const sql = `
             SELECT it.id AS itinerary_id,
                    it.identifier,
@@ -550,7 +583,7 @@ app.get("/itineraries", async (req, res) => {
         `;
 
         const rows = await new Promise((resolve, reject) => {
-            req.db.all(sql, [identifier], (err, rows) => {
+            req.db.all(sql, [id], (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows);
             });
