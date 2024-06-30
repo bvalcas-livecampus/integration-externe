@@ -481,7 +481,8 @@ app.post('/itinerary', async (req, res) => {
                         return;
                     }
 
-                    let newItineraryId = this.lastID;
+                    let newItineraryId = this.lastID === 0 ? 1 : this.lastID;
+                    
                     sql.finalize();
 
                     await Promise.all(points.map(async (point) => {
