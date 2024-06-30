@@ -114,19 +114,16 @@ app.post('/itinerary', async (req, res) => {
     const {itinerary, name, points, image} = req.body;
     if (itinerary && name && points && image) {
         const htmlPDF = new PuppeteerHTMLPDF();
+        const dirPath = path.join(__dirname, 'public');
         try {
-            const dirPath = path.join(__dirname, 'public');
-            fs.mkdir(dirPath, { recursive: true }, (err) => {
-                if (err) {
-                    throw new Error('Error creating directory:', err);
-                }
-            });
-        } catch (e) {
+            await fs.promises.mkdir(dirPath, { recursive: true });
+        } catch (err) {
+            console.error('Erreur lors de la création du répertoire :', err);
             res.status(400).send({
                 statut: "Erreur",
-                Message: "Une erreure est survenue lors de l'ajout du pdf : " + err
-            })
-            return ;
+                Message: "Une erreur est survenue lors de l'ajout du pdf : " + err.message
+            });
+            return
         }
         const url = `./public/` + itinerary + ' - ' + name + '.pdf';
         const options = {
@@ -138,10 +135,10 @@ app.post('/itinerary', async (req, res) => {
         let sql = req.db.prepare("INSERT INTO pdf VALUES (?, ?, ?)", [itinerary, url, "Creating"])
         sql.run((err) => {
             if (err) {
-                console.error('Une erreure est survenue lors de l\'ajout du pdf dans la bdd : ' + err);
+                console.error('Une erreur est survenue lors de l\'ajout du pdf dans la bdd : ' + err);
                 res.status(400).send({
                     statut: "Erreur",
-                    Message: "Une erreure est survenue lors de l'ajout du pdf : " + err
+                    Message: "Une erreur est survenue lors de l'ajout du pdf : " + err
                 })
                 return;
             }
