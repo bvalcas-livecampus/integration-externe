@@ -1,3 +1,11 @@
+/**
+ * Cette fonction permet de faire des appels à l'API
+ * @param method - La méthode de l'appel (POST, GET, PATCH) {string}
+ * @param action - L'action à effectuer {string}
+ * @param body - Le corps de la requête {object}
+ * @param params - Les paramètres de la requête {string}
+ * @param headers - Les headers de la requête {object}
+ */
 const api = async (method: 'POST' | 'GET' | 'PATCH', action: string, body: object = {}, params:string = "", headers: object = {}) => {
     const token = localStorage.getItem('token');
 

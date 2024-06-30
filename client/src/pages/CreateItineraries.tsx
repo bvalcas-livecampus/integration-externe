@@ -10,11 +10,15 @@ import Input from "../components/Form/Input.tsx";
 import CreateItineraryHelp from "../components/Itinerary/CreateItineraryHelp.tsx";
 import Button from "../components/Button.tsx";
 import domtoimage from 'dom-to-image';
+import {LatLngExpression, LeafletMouseEvent} from "leaflet";
 
-const MapClickHandler = ({onMapClick}) => {
-    // Utilisation du hook useMapEvent pour gérer le clic sur la carte
+type MapClickHandlerProps = {
+    onMapClick: (e: LeafletMouseEvent) => void;
+}
+
+const MapClickHandler = ({onMapClick}: MapClickHandlerProps) => {
     useMapEvent('click', onMapClick);
-    return null; // Ce composant ne rend rien directement sur la carte
+    return null;
 };
 
 enum Step {
@@ -29,7 +33,10 @@ const CreateItineraries = () => {
     const [stations, setStations] = useState<Station[]>([]);
     const [filteredStations, setFilteredStations] = useState<Station[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [markers, setMarkers] = useState([]);
+    const [markers, setMarkers] = useState<{
+        lat: number;
+        lon: number;
+    }[]>([]);
     const step = useRef(Step.PreStart);
     const [name, setName] = useState("");
     const [preCreate, setPreCreate] = useState(false);
@@ -41,12 +48,15 @@ const CreateItineraries = () => {
         lat: number;
     }) => {
         const station = filteredStations.find(station => station.coordonnees_geo === coordonnees_geo);
+        if (!station) {
+            return;
+        }
         const {lon, lat} = station.coordonnees_geo;
         setMarkers([...markers, {lat, lon}]);
         setFilteredStations([]);
     }
 
-    const handleMapClick = (e) => {
+    const handleMapClick = (e: LeafletMouseEvent) => {
         const {lat, lng} = e.latlng;
         switch (step.current) {
             case Step.PreStart: {
@@ -186,7 +196,7 @@ const CreateItineraries = () => {
     return (
         <div className="flex justify-center">
             <CreateItineraryHelp/>
-            <MapContainer id="map-all-stations" center={map.getCenter(filteredStations)} zoom={13}
+            <MapContainer id="map-all-stations" center={map.getCenterStations(filteredStations) as LatLngExpression} zoom={13}
                           scrollWheelZoom={false} preferCanvas={true}>
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

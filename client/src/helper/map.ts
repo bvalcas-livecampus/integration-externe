@@ -1,3 +1,5 @@
+import {Step} from "../type/type.ts";
+
 export type Station = {
     stationcode: string;
     name: string;
@@ -24,7 +26,7 @@ const map = {
      * @param stations {Station[]}- Les stations
      * @returns {[lat, lng]} - Les coordonnées du centre de la carte
      */
-    getCenter: (stations: Station[]) => {
+    getCenterStations: (stations: Station[]) => {
         if (stations.length === 0) {
             return [48.85, 2.26];
         }
@@ -44,10 +46,35 @@ const map = {
         return [lat, lng];
     },
 
-    deg2rad(deg) {
+    /**
+     * Cette fonction permet d'obtenir le centre de la carte à partir des étapes
+     * @param steps {Step[]} - Les étapes
+     */
+    getCenterSteps: (steps: Step[]) => {
+        const {countLat, countLng} = steps.reduce((acc, step) => {
+            acc.countLat += step.lat;
+            acc.countLng += step.lon;
+            return acc;
+        }, {countLat: 0, countLng: 0});
+
+        const lat = countLat / steps.length;
+        const lng = countLng / steps.length;
+        return [lat, lng];
+    },
+
+    /**
+     * Cette fonction permet de convertir des degrés en radians
+     * @param deg {number} - Les degrés
+     */
+    deg2rad(deg: number) {
         return deg * (Math.PI / 180);
     },
 
+    /**
+     * Cette fonction permet de filtrer les stations à partir d'une position de départ
+     * @param stations - Les stations {Station[]}
+     * @param start - La position de départ {lat: number, lon: number}
+     */
     filteredStations: (stations: Station[], start: {lat: number, lon: number}) => {
         const distance = 0.5;
         const markers = [];

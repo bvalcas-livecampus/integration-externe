@@ -1,13 +1,12 @@
-import {useContext, useEffect, useRef, useState} from "react";
+import {useContext, useState} from "react";
 import Input from "../components/Form/Input.tsx";
 import {handleIdentifier, handlePassword} from "../helper/customer.ts";
 import api from "../helper/api.ts";
-import {useNavigate} from "react-router-dom";
 import Error from "../components/Form/Error.tsx";
 import Spinner from "../components/Spinner.tsx";
 import {toast} from "react-toastify";
-import logout from "./Logout.tsx";
 import {AuthContext} from "../context/AuthContext.tsx";
+import {useNavigate} from "react-router-dom";
 
 const Account = () => {
     const [changeIdentifier, setChangeIdentifier] = useState(false);
@@ -24,6 +23,7 @@ const Account = () => {
     const context = useContext(AuthContext);
     const updateIdentifier = context.updateIdentifier
     const id = context.identifier
+    const navigate = useNavigate();
     let title = "Changer vos informations"
 
     if (changeIdentifier) {
@@ -38,7 +38,7 @@ const Account = () => {
         setLastPassword(password);
     }
 
-    const onSubmitField = (fieldName: "identifier" | "password", value, successCallback) => {
+    const onSubmitField = (fieldName: "identifier" | "password", value: string | null, successCallback: () => void) => {
         if (!value) {
             setError({
                 ...error,
@@ -103,7 +103,9 @@ const Account = () => {
         } else
             // On modifie l'identifiant
             update();
-
+            // On déconnecte l'utilisateur pour qu'il se reconnecte avec son nouvel identifiant
+            context.logout();
+            navigate("/")
     }
 
     const onSubmitIdentifier = () => {
@@ -121,8 +123,6 @@ const Account = () => {
     if (isLoading && !localStorage.getItem("token")) {
         return <Spinner/>
     }
-
-    console.log(id)
 
     return (
         <div className="max-w-lg mx-auto  bg-white dark:bg-gray-800 rounded-lg shadow-md px-8 py-10 flex flex-col items-center">

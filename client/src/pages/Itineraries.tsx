@@ -4,6 +4,7 @@ import map, {Station} from "../helper/map.ts";
 import {toast} from "react-toastify";
 import Spinner from "../components/Spinner.tsx";
 import {MapContainer, Marker, Popup, TileLayer} from "react-leaflet";
+import {LatLngExpression} from "leaflet";
 
 const Itineraries = () => {
     const [stations, setStations] = useState<Station[]>([]);
@@ -37,7 +38,7 @@ const Itineraries = () => {
     return (
         <div className="flex justify-center flex-col items-center">
             <h1 className="text-sm font-bold mb-2">Les stations disponibles sont affichées sur la carte : </h1>
-            <MapContainer id="map-all-stations" center={map.getCenter(stations)} zoom={12}
+            <MapContainer id="map-all-stations" center={map.getCenterStations(stations) as LatLngExpression} zoom={12}
                           scrollWheelZoom={false} preferCanvas={true}>
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

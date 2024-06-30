@@ -1,6 +1,4 @@
-import {createContext, useEffect, useState} from 'react';
-import api from "../helper/api.ts";
-import {useNavigate} from "react-router-dom";
+import {createContext, PropsWithChildren, useState} from 'react';
 
 interface AuthContextType {
     isConnected: boolean;
@@ -14,13 +12,13 @@ export const AuthContext = createContext<AuthContextType>({
     isConnected: false,
     identifier: '',
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    login: (identifier: string) => {},
+    login: (_identifier: string) => {},
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    updateIdentifier: (identifier: string) => {},
+    updateIdentifier: (_identifier: string) => {},
     logout: () => {}
 });
 
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = ({ children }: PropsWithChildren) => {
     const [isConnected, setIsConnected] = useState(false);
     const [identifier, setIdentifier] = useState('');
 
@@ -32,6 +30,7 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         setIsConnected(false);
         setIdentifier('');
+        localStorage.removeItem('token');
     };
 
     const authContextValue: AuthContextType = {

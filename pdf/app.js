@@ -203,10 +203,10 @@ app.get('/itinerary', async (req, res) => {
         let sql = req.db.prepare("SELECT url, status FROM pdf WHERE id_itineraire = ?", [id])
         sql.get(async (err, result) => {
             if (err) {
-                console.error('Une erreure est survenue lors de la récupération du pdf dans la bdd : ' + err);
+                console.error('Une erreur est survenue lors de la récupération du pdf dans la bdd : ' + err);
                 res.status(500).json({
                     statut: "Erreur",
-                    Message: "Une erreure est survenue lors de la récupération du pdf : " + err
+                    Message: "Une erreur est survenue lors de la récupération du pdf : " + err
                 })
                 return;
             }

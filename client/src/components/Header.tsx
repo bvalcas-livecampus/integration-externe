@@ -17,11 +17,12 @@ const Header = () => {
                 .catch(error => {
                     // Le token ne correspond pas à un utilisateur connecté ou une erreur est survenue
                     logout()
-                    localStorage.removeItem('token')
+                    navigate("/")
                     console.error(error);
                 })
         } else {
             logout()
+            navigate("/")
         }
     }, [isConnected, navigate, login, logout]);
 
