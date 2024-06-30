@@ -11,6 +11,8 @@ Sujet Intégration Externe
 - pdf
 - front
 
+Pour le serveur d'authentification et le serveur front, n'oubliez pas de configurer votre fichier .env. Il y a un .env.exemple pour vous montrer comment faire.
+
 Pour chaque projet installer les modules
 
 ```
