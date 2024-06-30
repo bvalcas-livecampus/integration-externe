@@ -134,7 +134,7 @@ app.post('/itinerary', async (req, res) => {
         };
         await htmlPDF.setOptions(options);
 
-        let sql = req.db.prepare("INSERT INTO pdf (id_itineraire, url, status) VALUES (?, ?, ?)", [itinerary, url, "Creating"]);
+        let sql = req.db.prepare("INSERT OR IGNORE INTO pdf (id_itineraire, url, status) VALUES (?, ?, ?)", [itinerary, url, "Creating"]);
         await sql.run();
         console.log("Pdf ajouté à la bdd");
 
