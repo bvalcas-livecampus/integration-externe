@@ -112,19 +112,20 @@ const api_adresse = async (lon, lat) => {
  */
 app.post('/itinerary', async (req, res) => {
     const {itinerary, name, points, image} = req.body;
-    if (itinerary && name && points && image) {
+
+    if (!(itinerary && name && points && image)) {
+        res.status(400).send({statut: "Erreur", message: "Les paramètres ne sont pas définis"});
+        return;
+    }
+
+    res.status(204).send({statut: "Succès initial", message: ''});
+
+    // Processus de génération du PDF et mise à jour de la base de données
+    try {
         const htmlPDF = new PuppeteerHTMLPDF();
         const dirPath = path.join(__dirname, 'public');
-        try {
-            await fs.promises.mkdir(dirPath, { recursive: true });
-        } catch (err) {
-            console.error('Erreur lors de la création du répertoire :', err);
-            res.status(400).send({
-                statut: "Erreur",
-                Message: "Une erreur est survenue lors de l'ajout du pdf : " + err.message
-            });
-            return
-        }
+        await fs.promises.mkdir(dirPath, { recursive: true });
+
         const url = `./public/` + itinerary + ' - ' + name + '.pdf';
         const options = {
             format: "A4",
@@ -132,62 +133,35 @@ app.post('/itinerary', async (req, res) => {
         };
         await htmlPDF.setOptions(options);
 
-        let sql = req.db.prepare("INSERT INTO pdf VALUES (?, ?, ?)", [itinerary, url, "Creating"])
-        sql.run((err) => {
-            if (err) {
-                console.error('Une erreur est survenue lors de l\'ajout du pdf dans la bdd : ' + err);
-                res.status(400).send({
-                    statut: "Erreur",
-                    Message: "Une erreur est survenue lors de l'ajout du pdf : " + err
-                })
-                return;
-            }
-            console.log("Pdf ajouté à la bdd");
-            sql.finalize();
-        })
+        let sql = req.db.prepare("INSERT INTO pdf VALUES (?, ?, ?)", [itinerary, url, "Creating"]);
+        await sql.run();
+        console.log("Pdf ajouté à la bdd");
 
-        let content = "<h1>" + name + "</h1>"
-
-        res.status(204).send({statut: "Succès", message: ''});
+        let content = "<h1>" + name + "</h1>";
 
         const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
         await Promise.all(points.map(async (coordinates, index) => {
             await delay(((index + 1) / 50) * 1000);
-            const info = await api_adresse(coordinates["lon"], coordinates['lat'])
+            const info = await api_adresse(coordinates["lon"], coordinates['lat']);
             content += "<p>Allez à " + info.features[0].properties.label + "</p>";
         }));
 
         content += `<img src="${image}" style="width: 100%; height: auto;" />`;
 
-        try {
-            await htmlPDF.create(content)
-            let sql = req.db.prepare("UPDATE pdf set status = 'Finished' WHERE id_itineraire = ?", [itinerary])
-            sql.run((err) => {
-                if (err) {
-                    console.error('Une erreur est survenue lors de la maj du status du pdf dans la bdd : ' + err);
-                    return;
-                }
-                console.log("Status du pdj mis à jour");
-                sql.finalize();
-            })
-        } catch (error) {
-            console.log("Erreur lors de la création de pdf : ", error)
-            let sql = req.db.prepare("UPDATE pdf set status = 'Error' WHERE id_itineraire = ?", [itinerary])
-            sql.run((err) => {
-                if (err) {
-                    console.error('Une erreur est survenue lors de la maj du status du pdf dans la bdd : ' + err);
-                    return;
-                }
-                console.log("Status du pdf mis à jour");
-                sql.finalize();
-            })
-        }
-    } else {
-        res.status(400).send({statut: "Erreur", message: "Les paramètres ne sont pas définis"});
-        return;
+        await htmlPDF.create(content);
+
+        sql = req.db.prepare("UPDATE pdf SET status = 'Finished' WHERE id_itineraire = ?", [itinerary]);
+        await sql.run();
+        console.log("Status du pdf mis à jour");
+
+    } catch (error) {
+        console.log("Erreur lors de la création de pdf : ", error);
+        let sql = req.db.prepare("UPDATE pdf SET status = 'Error' WHERE id_itineraire = ?", [itinerary]);
+        await sql.run();
+        console.error('Une erreur est survenue lors de la maj du status du pdf dans la bdd : ' + error);
     }
-})
+});
 
 /**
  * Cette route permet de récupérer un pdf
