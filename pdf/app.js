@@ -33,7 +33,8 @@ const db = new sqlite3.Database('itineraire_pdf', (err) => {
     } else {
         // Création de la table "pdf" si elle n'existe pas
         db.run(`CREATE TABLE IF NOT EXISTS pdf (
-            id_itineraire INTEGER PRIMARY KEY NOT NULL,
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            id_itineraire INTEGER NOT NULL,
             url VARCHAR(255) NOT NULL,
             status VARCHAR(10) NOT NULL
             )`, (err) => {
@@ -133,12 +134,12 @@ app.post('/itinerary', async (req, res) => {
         };
         await htmlPDF.setOptions(options);
 
-        let sql = req.db.prepare("INSERT INTO pdf VALUES (?, ?, ?)", [itinerary, url, "Creating"]);
+        let sql = req.db.prepare("INSERT INTO pdf (id_itineraire, url, status) VALUES (?, ?, ?)", [itinerary, url, "Creating"]);
         await sql.run();
         console.log("Pdf ajouté à la bdd");
 
         let content = "<h1>" + name + "</h1>";
-
+        
         const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
         await Promise.all(points.map(async (coordinates, index) => {
