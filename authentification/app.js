@@ -288,7 +288,7 @@ app.patch('/update', (req, res) => {
                 })
                 return;
             }
-            let sql = req.db.prepare("UPDATE compte SET motdepasse = ? WHERE identifiant = ?", [motdepasse, id])
+            let sql = req.db.prepare("UPDATE compte SET motdepasse = ? WHERE identifiant = ?", [hash, id])
             sql.run((err) => {
                 if (err) {
                     console.error('Une erreure est survenue lors de la modification du compte : ' + err);

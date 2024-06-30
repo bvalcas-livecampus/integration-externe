@@ -1,14 +1,37 @@
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import api from "../helper/api.ts";
 import map, {Station} from "../helper/map.ts";
 import {toast} from "react-toastify";
 import Spinner from "../components/Spinner.tsx";
 import {MapContainer, Marker, Popup, TileLayer} from "react-leaflet";
 import {LatLngExpression} from "leaflet";
+import {useNavigate} from "react-router-dom";
+import {AuthContext} from "../context/AuthContext.tsx";
 
 const Itineraries = () => {
     const [stations, setStations] = useState<Station[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const {login, logout, isConnected} = useContext(AuthContext);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            api("POST", "verify")
+                .then((response) => {
+                    login(response.utilisateur.identifiant)
+                })
+                .catch(error => {
+                    // Le token ne correspond pas à un utilisateur connecté ou une erreur est survenue
+                    logout()
+                    navigate("/")
+                    console.error(error);
+                })
+        } else {
+            logout()
+            navigate("/")
+        }
+    }, [isConnected, navigate, login, logout]);
 
     useEffect(() => {
         api("GET", "stations").then(stations => {

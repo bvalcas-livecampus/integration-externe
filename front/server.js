@@ -570,7 +570,7 @@ app.get("/itineraries", async (req, res) => {
         };
         let previousItineraryId = rows[0].itinerary_id
 
-        for (const row of rows) {
+        for (const row of rows){
             if (previousItineraryId !== row.itinerary_id) {
                 itineraries.push(itinerary);
                 itinerary = {
@@ -580,29 +580,32 @@ app.get("/itineraries", async (req, res) => {
                 };
             }
             previousItineraryId = row.itinerary_id
-            const response = await fetch(`http://localhost:3002/itinerary?id=` + row.itinerary_id, {
-                method: 'GET',
-                headers: {
-                    "Content-Type": "application/json",
-                }
-            });
 
-            if (response.ok) {
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    const data = await response.json();
-                    itinerary.status = data.status;
-                    itinerary.message = data.message;
-                    if (data.pdfBase64) {
-                        itinerary.pdf = data.pdfBase64;
+            if (!itinerary.pdf && !itinerary.status && !itinerary.message) {
+                const response = await fetch(`http://localhost:3002/itinerary?id=` + row.itinerary_id, {
+                    method: 'GET',
+                    headers: {
+                        "Content-Type": "application/json",
+                    }
+                });
+
+                if (response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const data = await response.json();
+                        itinerary.status = data.status;
+                        itinerary.message = data.message;
+                        if (data.pdfBase64) {
+                            itinerary.pdf = data.pdfBase64;
+                        }
+                    } else {
+                        itinerary.status = "Erreur";
+                        itinerary.message = "Type de contenu inconnu";
                     }
                 } else {
                     itinerary.status = "Erreur";
-                    itinerary.message = "Type de contenu inconnu";
+                    itinerary.message = "Une erreur est survenue lors de la récupération du pdf";
                 }
-            } else {
-                itinerary.status = "Erreur";
-                itinerary.message = "Une erreur est survenue lors de la récupération du pdf";
             }
 
             itinerary.steps.push({

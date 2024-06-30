@@ -199,6 +199,7 @@ app.post('/itinerary', async (req, res) => {
  */
 app.get('/itinerary', async (req, res) => {
     const id = req.query.id;
+
     if (id) {
         let sql = req.db.prepare("SELECT url, status FROM pdf WHERE id_itineraire = ?", [id])
         sql.get(async (err, result) => {

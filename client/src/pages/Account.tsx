@@ -100,12 +100,13 @@ const Account = () => {
                         global: "L'ancien mot de passe est incorrect"
                     });
                 })
-        } else
+        } else {
             // On modifie l'identifiant
             update();
             // On déconnecte l'utilisateur pour qu'il se reconnecte avec son nouvel identifiant
             context.logout();
             navigate("/")
+        }
     }
 
     const onSubmitIdentifier = () => {
