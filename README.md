@@ -1,4 +1,4 @@
-# integration-externe
+# fork integration-externe
 Sujet Intégration Externe
 
 - Sergio GONZALEZ
@@ -11,36 +11,8 @@ Sujet Intégration Externe
 - pdf
 - front
 
-Pour le serveur d'authentification et le serveur front, n'oubliez pas de configurer votre fichier .env. Il y a un .env.exemple pour vous montrer comment faire.
+Chaque dossier est pourvu d'un Dockerfile qui permet à chaque projet de pouvoir être lancé rapidement et simplement via une commande Docker.
 
-Pour chaque projet installer les modules
+Les variables d'environnements sont récupérés depuis les variables d'environnement système.
 
-```
-npm install -y
-```
-
-Puis lancer chaque projet séparément
-
-```
-npm run start
-```
-
-# authentification
-Il s'agit du serveur back-end qui s'occupe de l'authentification
-
-Il est sera accessible avec l'url http://localhost:3000
-
-# client
-Il s'agit du code front-end que le client final recoit
-
-Il est sera accessible avec l'url http://localhost:5173/
-
-# pdf
-Il s'agit du serveur back-end qui s'occupe de la gestion des pdfs
-
-Il est sera accessible avec l'url http://localhost:3001/
-
-# front
-Il s'agit du serveur back-end qui communique avec le front-end `client`, le back-end `authentification` et le back-end `pdf`
-
-Il est sera accessible avec l'url http://localhost:3002/
+Vous pouvez consulté la documentation sur ce projet : https://github.com/bvalcas-livecampus/CI-CD_project/blob/main/README.md
