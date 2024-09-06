@@ -10,7 +10,7 @@ require('dotenv').config()
 
 const sqlite3 = require('sqlite3').verbose();
 
-app.use(cors({credentials: true, origin: "http://localhost:5173" /* pour le site en dev */ || "*" /* pour PostMan */}))
+app.use(cors({credentials: true, origin: "http://localhost:8080" /* pour le site en dev */ || "*" /* pour PostMan */}))
 
 app.use(bodyParser.urlencoded({
     extended: true
@@ -54,7 +54,7 @@ const auth = async (req, method, action, body, params = "", headers = {}) => {
     let response = {}
     let responseJson = {}
     try {
-        response = await fetch(`http://localhost:3000/${action}${params}`, {
+        response = await fetch(`http://auth:3000/${action}${params}`, {
             method,
             headers: {
                 "Content-Type": "application/json",
@@ -146,7 +146,7 @@ app.post('/register', async (req, res) => {
 
 /**
  * Cette route permet de connecter un utilisateur
- * @req La requête
+ * @req La requêtecd
  * @res La réponse
  * @req.body {Object} Les données de la requête.
  * @req.body.identifiant {string} L'identifiant de l'utilisateur
@@ -500,7 +500,7 @@ app.post('/itinerary', async (req, res) => {
                         });
                     }))
 
-                    fetch(`http://localhost:3002/itinerary`, {
+                    fetch(`http://pdf:3002/itinerary`, {
                         method: 'POST',
                         headers: {
                             "Content-Type": "application/json",
@@ -616,7 +616,7 @@ app.get("/itineraries", async (req, res) => {
             previousItineraryId = row.itinerary_id
 
             if (!itinerary.pdf && !itinerary.status && !itinerary.message) {
-                const response = await fetch(`http://localhost:3002/itinerary?id=` + row.itinerary_id, {
+                const response = await fetch(`http://pdf:3002/itinerary?id=` + row.itinerary_id, {
                     method: 'GET',
                     headers: {
                         "Content-Type": "application/json",

@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  auth:
+    build:
+      context: ./authentification
+    container_name: auth_service
+    networks:
+      - my_network
+    ports:
+      - "3000:3000"
+    environment:
+      - SECRET_KEY=ma_clé_secrète
+
+  front:
+    build:
+      context: ./front
+    container_name: front_service
+    networks:
+      - my_network
+    ports:
+      - "3001:3001"
+    environment:
+      - SECRET_KEY_SESSION=ma_clé_session
+      - SECRET_KEY_AUTH=ma_clé_secrète
+
+  client:
+    build:
+      context: ./client
+    container_name: mon-app-vite-nginx
+    ports:
+      - "8080:8080"
+
+  pdf:
+    build:
+      context: ./pdf
+    container_name: pdf_service
+    networks:
+      - my_network
+    ports:
+      - "3002:3002" 
+
+networks:
+  my_network:
+    driver: bridge

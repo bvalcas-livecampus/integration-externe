@@ -1,7 +1,7 @@
-# Étape 1: Construction de l'application
+# Utiliser l'image Node.js officielle
 FROM node:20
 
-# Définir le répertoire de travail pour la construction
+# Définir le répertoire de travail pour l'application
 WORKDIR /app
 
 # Copier les fichiers package.json et package-lock.json pour installer les dépendances
