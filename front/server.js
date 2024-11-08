@@ -53,6 +53,7 @@ app.listen(3001, () => {
 const auth = async (req, method, action, body, params = "", headers = {}) => {
     let response = {}
     let responseJson = {}
+    console.log("connection to auth...")
     try {
         response = await fetch(`http://auth:3000/${action}${params}`, {
             method,
@@ -81,8 +82,10 @@ const auth = async (req, method, action, body, params = "", headers = {}) => {
         }
     }
     if (response.status === 200 || response.status === 201) {
+        console.log("success connection to auth")
         return responseJson;
     } else {
+        console.error("failed connection to auth")
         throw new Error(responseJson.message);
     }
 }
@@ -438,17 +441,18 @@ app.get('/stations', async (req, res) => {
 });
 
 const getId = async (identifier) =>  {
-    response = await fetch(`http://localhost:3000/compteId?identifiant=${identifier}`, {
+    const response = await fetch(`http://auth:3000/compteId?identifiant=${identifier}`, {
         method: 'GET',
         headers: {
             "Content-Type": "application/json",
         }
     });
-    responseJson = await response.json()
+    const responseJson = await response.json()
     if (responseJson.status === "Succès") {
         return responseJson.message;
     } else {
-        return null;
+        console.log("responseJson", ici)
+        throw new Error("id was not get")
     }
 }
 
@@ -561,6 +565,7 @@ app.get("/itineraries", async (req, res) => {
             return;
         }
 
+        console.log("recuperation de l'id", identifier)
         const id = await getId(identifier);
 
         if (!id) {

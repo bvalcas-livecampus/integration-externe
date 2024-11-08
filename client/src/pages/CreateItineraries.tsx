@@ -146,6 +146,8 @@ const CreateItineraries = () => {
                         position: "bottom-center"
                     })
                 })
+            } else {
+                console.error('no imageData');
             }
         } catch (error) {
             console.error('Erreur lors de la capture d\'écran :', error);

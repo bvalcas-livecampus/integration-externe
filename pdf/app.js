@@ -89,14 +89,14 @@ app.use((req, res, next) => {
  *     }>
  */
 const api_adresse = async (lon, lat) => {
+    console.log("api_adresse")
     const response = await fetch(`https://api-adresse.data.gouv.fr/reverse/?lon=${lon}&lat=${lat}`, {
         method: "GET"
     });
+    const responseJson = await response.json();
     if (response.ok) {
-        const responseJson = await response.json();
         return responseJson;
     } else {
-        const responseJson = await response.json();
         throw new Error(responseJson.message);
     }
 }
@@ -123,7 +123,7 @@ app.post('/itinerary', async (req, res) => {
 
     // Processus de génération du PDF et mise à jour de la base de données
     try {
-        const htmlPDF = new PuppeteerHTMLPDF();
+        //const htmlPDF = new PuppeteerHTMLPDF();
         const dirPath = path.join(__dirname, 'public');
         await fs.promises.mkdir(dirPath, { recursive: true });
 
@@ -132,7 +132,7 @@ app.post('/itinerary', async (req, res) => {
             format: "A4",
             path: url,
         };
-        await htmlPDF.setOptions(options);
+        //await htmlPDF.setOptions(options);
 
         let sql = req.db.prepare("INSERT OR IGNORE INTO pdf (id_itineraire, url, status) VALUES (?, ?, ?)", [itinerary, url, "Creating"]);
         await sql.run();
@@ -150,12 +150,11 @@ app.post('/itinerary', async (req, res) => {
 
         content += `<img src="${image}" style="width: 100%; height: auto;" />`;
 
-        await htmlPDF.create(content);
+        //await htmlPDF.create(content);
 
         sql = req.db.prepare("UPDATE pdf SET status = 'Finished' WHERE id_itineraire = ?", [itinerary]);
         await sql.run();
         console.log("Status du pdf mis à jour");
-
     } catch (error) {
         console.log("Erreur lors de la création de pdf : ", error);
         let sql = req.db.prepare("UPDATE pdf SET status = 'Error' WHERE id_itineraire = ?", [itinerary]);
