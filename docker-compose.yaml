@@ -27,6 +27,8 @@ services:
       - DN_CLIENT=client
 
   client:
+    networks:
+      - my_network
     build:
       context: ./client
     container_name: client
