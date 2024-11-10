@@ -1,0 +1,15 @@
+{
+  "name": "integration-externe",
+  "version": "1.0.0",
+  "description": "Sujet Intégration Externe",
+  "main": "index.js",
+  "scripts": {
+    "build-start": "docker-compose build && docker-compose up -d",
+    "build": "docker-compose build",
+    "start": "docker-compose up -d",
+    "stop": "docker-compose down"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

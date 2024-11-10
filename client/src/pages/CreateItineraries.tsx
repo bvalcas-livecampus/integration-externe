@@ -142,14 +142,21 @@ const CreateItineraries = () => {
                         position: "bottom-center"
                     })
                 }).catch((err) => {
+                    console.error("error post")
                     toast.error(err.message, {
                         position: "bottom-center"
                     })
                 })
             } else {
+                toast.error("aucune image à sauvegarer", {
+                    position: "bottom-center"
+                })
                 console.error('no imageData');
             }
         } catch (error) {
+            toast.error("Erreur lors de la capture d\'écran ", {
+                position: "bottom-center"
+            })
             console.error('Erreur lors de la capture d\'écran :', error);
         }
     }
