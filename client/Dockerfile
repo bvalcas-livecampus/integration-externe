@@ -4,14 +4,11 @@ FROM node:20 AS builder
 # Définir le répertoire de travail pour la construction
 WORKDIR /app
 
-# Définir des variables d'environnement
-ENV DN_front=front
-
 # Ajouter les arguments de build pour les variables locales
-ARG DN_front
+ARG DN_FRONT
 
 # Définir des variables d'environnement à partir des arguments
-ENV VITE_DN_FRONT=$DN_front
+ENV VITE_DN_FRONT=$DN_FRONT
 
 # Copier le fichier package.json et package-lock.json pour installer les dépendances
 COPY package*.json ./ 

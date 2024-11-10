@@ -5,10 +5,10 @@ FROM node:20
 WORKDIR /app
 
 # Ajouter les arguments de build pour les variables locales
-ARG DN_front
+ARG DN_FRONT
 
 # Définir des variables d'environnement
-ENV DN_front=front
+ENV DN_FRONT=front
 
 # Copier les fichiers package.json et package-lock.json pour installer les dépendances
 COPY package*.json ./

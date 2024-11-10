@@ -5,20 +5,20 @@ FROM node:20
 WORKDIR /app
 
 # Ajouter les arguments de build pour les variables locales
-ARG DN_front
+ARG DN_FRONT
 ARG SECRET_KEY_SESSION
 ARG SECRET_KEY_AUTH
-ARG DN_auth
-ARG DN_pdf
-ARG DN_client
+ARG DN_AUTH
+ARG DN_PDF
+ARG DN_CLIENT
 
 # Définir des variables d'environnement à partir des arguments
-ENV DN_front=$DN_front
+ENV DN_FRONT=$DN_FRONT
 ENV SECRET_KEY_SESSION=$SECRET_KEY_SESSION
 ENV SECRET_KEY_AUTH=$SECRET_KEY_AUTH
-ENV DN_auth=$DN_auth
-ENV DN_pdf=$DN_pdf
-ENV DN_client=$DN_client
+ENV DN_AUTH=$DN_AUTH
+ENV DN_PDF=$DN_PDF
+ENV DN_CLIENT=$DN_CLIENT
 
 # Copier les fichiers package.json et package-lock.json pour installer les dépendances
 COPY package*.json ./

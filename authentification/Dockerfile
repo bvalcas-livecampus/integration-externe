@@ -6,11 +6,11 @@ WORKDIR /app
 
 # Ajouter les arguments de build pour les variables locales
 ARG SECRET_KEY
-ARG DN_front
+ARG DN_FRONT
 
 # Définir des variables d'environnement
 ARG SECRET_KEY=$SECRET_KEY
-ENV DN_front=$DN_front
+ENV DN_FRONT=$DN_FRONT
 
 # Copier les fichiers package.json et package-lock.json pour installer les dépendances
 COPY package*.json ./

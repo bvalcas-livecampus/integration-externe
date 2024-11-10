@@ -9,7 +9,7 @@ services:
       - "3000:3000"
     environment:
       - SECRET_KEY=ma_clé_secrète
-      - DN_front=front
+      - DN_FRONT=front
 
   front:
     build:
@@ -22,9 +22,9 @@ services:
     environment:
       - SECRET_KEY_SESSION=ma_clé_session
       - SECRET_KEY_AUTH=ma_clé_secrète
-      - DN_auth=auth
-      - DN_pdf=pdf
-      - DN_client=client
+      - DN_AUTH=auth
+      - DN_PDF=pdf
+      - DN_CLIENT=client
 
   client:
     build:
@@ -33,7 +33,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DN_front=front
+      - DN_FRONT=front
 
   pdf:
     build:
@@ -44,7 +44,7 @@ services:
     ports:
       - "3002:3002"
     environment:
-      - DN_front=front
+      - DN_FRONT=front
 
 networks:
   my_network:

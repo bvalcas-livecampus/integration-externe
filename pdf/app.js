@@ -16,7 +16,7 @@ app.use(bodyParser.urlencoded({
 
 app.use(cors({
     credentials: true,
-    origin: [`http://${process.env.DN_front ? process.env.DN_front : "localhost"}:3001`],
+    origin: [`http://${process.env.DN_FRONT ? process.env.DN_FRONT : "localhost"}:3001`],
 }))
 
 try {
