@@ -11,6 +11,7 @@ services:
       - "3000:3000"
     environment:
       - SECRET_KEY=ma_clé_secrète
+      - DN_front=front
 
   front:
     build:
@@ -23,6 +24,9 @@ services:
     environment:
       - SECRET_KEY_SESSION=ma_clé_session
       - SECRET_KEY_AUTH=ma_clé_secrète
+      - DN_auth=auth
+      - DN_pdf=pdf
+      - DN_client=client
 
   client:
     build:
@@ -30,6 +34,8 @@ services:
     container_name: mon-app-vite-nginx
     ports:
       - "8080:8080"
+    environment:
+      - DN_front=front
 
   pdf:
     build:
@@ -38,7 +44,9 @@ services:
     networks:
       - my_network
     ports:
-      - "3002:3002" 
+      - "3002:3002"
+    environment:
+      - DN_front=front
 
 networks:
   my_network:

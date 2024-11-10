@@ -12,7 +12,7 @@ const sqlite3 = require('sqlite3').verbose();
 
 app.use(cors({
     credentials: true,
-    origin: ["http://104.155.61.145", "http://client:8080", 'http://localhost'],
+    origin: ["http://104.155.61.145:80", `http://${process.env.DN_client ? process.env.DN_client : "localhost"}:8080`],
 }))
 
 app.use(bodyParser.urlencoded({
@@ -58,7 +58,7 @@ const auth = async (req, method, action, body, params = "", headers = {}) => {
     let responseJson = {}
     console.log("connection to auth...")
     try {
-        response = await fetch(`http://auth:3000/${action}${params}`, {
+        response = await fetch(`http://${process.env.DN_auth ? process.env.DN_auth : "localhost"}:3000/${action}${params}`, {
             method,
             headers: {
                 "Content-Type": "application/json",
@@ -444,7 +444,7 @@ app.get('/stations', async (req, res) => {
 });
 
 const getId = async (identifier) =>  {
-    const response = await fetch(`http://auth:3000/compteId?identifiant=${identifier}`, {
+    const response = await fetch(`http:///${process.env.DN_auth ? process.env.DN_auth : "localhost"}:3000/compteId?identifiant=${identifier}`, {
         method: 'GET',
         headers: {
             "Content-Type": "application/json",
@@ -507,7 +507,7 @@ app.post('/itinerary', async (req, res) => {
                         });
                     }))
 
-                    fetch(`http://pdf:3002/itinerary`, {
+                    fetch(`http:///${process.env.DN_pdf ? process.env.DN_pdf : "localhost"}:3002/itinerary`, {
                         method: 'POST',
                         headers: {
                             "Content-Type": "application/json",
@@ -624,7 +624,7 @@ app.get("/itineraries", async (req, res) => {
             previousItineraryId = row.itinerary_id
 
             if (!itinerary.pdf && !itinerary.status && !itinerary.message) {
-                const response = await fetch(`http://pdf:3002/itinerary?id=` + row.itinerary_id, {
+                const response = await fetch(`http://${process.env.DN_pdf ? process.env.DN_pdf : "localhost"}:3002/itinerary?id=` + row.itinerary_id, {
                     method: 'GET',
                     headers: {
                         "Content-Type": "application/json",

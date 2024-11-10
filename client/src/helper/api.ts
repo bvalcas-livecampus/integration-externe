@@ -1,3 +1,7 @@
+import dotenv from "dotenv";
+
+dotenv.config()
+
 /**
  * Cette fonction permet de faire des appels à l'API
  * @param method - La méthode de l'appel (POST, GET, PATCH) {string}
@@ -26,7 +30,8 @@ const api = async (method: 'POST' | 'GET' | 'PATCH', action: string, body: objec
         payload.body = JSON.stringify(body);
     }
 
-    const response = await fetch(`http://front:3001/${action}${params}`, payload);
+    
+    const response = await fetch(`http://${process.env.DN_front ? process.env.DN_front : "localhost"}:3001/${action}${params}`, payload);
     const responseJson = await response.json();
     if (response.status === 200 || response.status === 201) {
         return responseJson;

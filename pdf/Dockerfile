@@ -4,6 +4,12 @@ FROM node:20
 # Définir le répertoire de travail
 WORKDIR /app
 
+# Ajouter les arguments de build pour les variables locales
+ARG DN_front
+
+# Définir des variables d'environnement
+ENV DN_front=front
+
 # Copier les fichiers package.json et package-lock.json pour installer les dépendances
 COPY package*.json ./
 

@@ -4,18 +4,26 @@ FROM node:20 AS builder
 # Définir le répertoire de travail pour la construction
 WORKDIR /app
 
+# Définir des variables d'environnement
+ENV DN_front=front
+
+# Ajouter les arguments de build pour les variables locales
+ARG DN_front
+
+# Définir des variables d'environnement à partir des arguments
+ENV DN_front=$DN_front
+
 # Copier le fichier package.json et package-lock.json pour installer les dépendances
-COPY package*.json ./
+COPY package*.json ./ 
 
 # Installer les dépendances
 RUN npm install
 
 # Copier le reste des fichiers du projet
-COPY . .
+COPY . . 
 
 # Construire l'application (le résultat sera dans le dossier /app/dist)
 RUN npm run build
-
 
 # Étape 2: Serveur Nginx
 FROM nginx:alpine
@@ -26,7 +34,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copier le fichier de configuration Nginx personnalisé (si nécessaire)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Exposer le port 80 pour servir les fichiers
+# Exposer le port 8080 pour servir les fichiers
 EXPOSE 8080
 
 # Démarrer Nginx par défaut
