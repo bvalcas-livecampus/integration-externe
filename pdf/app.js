@@ -14,7 +14,10 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
-app.use(cors())
+app.use(cors({
+    credentials: true,
+    origin: ["http://front:3001"],
+}))
 
 try {
     app.use(bodyParser.json({

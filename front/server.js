@@ -10,7 +10,10 @@ require('dotenv').config()
 
 const sqlite3 = require('sqlite3').verbose();
 
-app.use(cors({credentials: true, origin: "*"}))
+app.use(cors({
+    credentials: true,
+    origin: ["http://104.155.61.145", "http://client:8080", 'http://localhost'],
+}))
 
 app.use(bodyParser.urlencoded({
     extended: true
