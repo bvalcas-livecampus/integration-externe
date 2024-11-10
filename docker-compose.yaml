@@ -45,8 +45,6 @@ services:
       - my_network
     ports:
       - "3002:3002"
-    environment:
-      - DN_FRONT=front
 
 networks:
   my_network:
