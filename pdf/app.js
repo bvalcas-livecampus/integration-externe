@@ -14,10 +14,7 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
-app.use(cors({
-    credentials: true,
-    origin: [`http://${process.env.DN_FRONT ? process.env.DN_FRONT : "localhost"}:3001`],
-}))
+app.use(cors())
 
 try {
     app.use(bodyParser.json({

@@ -9,7 +9,7 @@ ARG SECRET_KEY
 ARG DN_FRONT
 
 # Définir des variables d'environnement
-ARG SECRET_KEY=$SECRET_KEY
+ENV SECRET_KEY=$SECRET_KEY
 ENV DN_FRONT=$DN_FRONT
 
 # Copier les fichiers package.json et package-lock.json pour installer les dépendances

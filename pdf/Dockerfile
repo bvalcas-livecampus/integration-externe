@@ -8,7 +8,7 @@ WORKDIR /app
 ARG DN_FRONT
 
 # Définir des variables d'environnement
-ENV DN_FRONT=front
+ENV DN_FRONT=$DN_FRONT
 
 # Copier les fichiers package.json et package-lock.json pour installer les dépendances
 COPY package*.json ./
