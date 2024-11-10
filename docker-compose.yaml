@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   auth:
     build:
       context: ./authentification
-    container_name: auth_service
+    container_name: auth
     networks:
       - my_network
     ports:
@@ -16,7 +14,7 @@ services:
   front:
     build:
       context: ./front
-    container_name: front_service
+    container_name: front
     networks:
       - my_network
     ports:
@@ -31,7 +29,7 @@ services:
   client:
     build:
       context: ./client
-    container_name: mon-app-vite-nginx
+    container_name: client
     ports:
       - "8080:8080"
     environment:
@@ -40,7 +38,7 @@ services:
   pdf:
     build:
       context: ./pdf
-    container_name: pdf_service
+    container_name: pdf
     networks:
       - my_network
     ports:

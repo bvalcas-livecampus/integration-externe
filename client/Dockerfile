@@ -11,7 +11,7 @@ ENV DN_front=front
 ARG DN_front
 
 # Définir des variables d'environnement à partir des arguments
-ENV DN_front=$DN_front
+ENV VITE_DN_FRONT=$DN_front
 
 # Copier le fichier package.json et package-lock.json pour installer les dépendances
 COPY package*.json ./ 

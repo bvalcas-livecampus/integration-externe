@@ -12,7 +12,7 @@ const sqlite3 = require('sqlite3').verbose();
 
 app.use(cors({
     credentials: true,
-    origin: ["http://104.155.61.145:80", `http://${process.env.DN_client ? process.env.DN_client : "localhost"}:8080`],
+    origin: ["http://104.155.61.145:80", `http://${process.env.DN_client ? process.env.DN_client : "localhost"}:8080`, "*"],
 }))
 
 app.use(bodyParser.urlencoded({

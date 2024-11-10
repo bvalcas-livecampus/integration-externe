@@ -1,6 +1,4 @@
-import dotenv from "dotenv";
-
-dotenv.config()
+const apiUrl = import.meta.env.VITE_DN_FRONT;
 
 /**
  * Cette fonction permet de faire des appels à l'API
@@ -31,7 +29,7 @@ const api = async (method: 'POST' | 'GET' | 'PATCH', action: string, body: objec
     }
 
     
-    const response = await fetch(`http://${process.env.DN_front ? process.env.DN_front : "localhost"}:3001/${action}${params}`, payload);
+    const response = await fetch(`http://${apiUrl ? apiUrl : "localhost"}:3001/${action}${params}`, payload);
     const responseJson = await response.json();
     if (response.status === 200 || response.status === 201) {
         return responseJson;

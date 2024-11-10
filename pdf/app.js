@@ -4,7 +4,6 @@ const cors = require('cors')
 const app = express();
 const fs = require('fs');
 const path = require('path');
-const PuppeteerHTMLPDF = require("puppeteer-html-pdf");
 require('dotenv').config()
 
 const sqlite3 = require('sqlite3').verbose();
