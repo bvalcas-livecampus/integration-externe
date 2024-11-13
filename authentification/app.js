@@ -109,7 +109,7 @@ app.post('/register', async (req, res) => {
 function expTokenVerification(jeton, req) {
     return new Promise((resolve, reject) => {
         try {
-            const token = jwt.verify(jeton, process.env.SECRET_KEY);
+            const token = jwt.verify(jeton, process.env.SECRET_KEY_AUTH);
 
             if (!token.iat || !token.exp || !token.identifiant) {
                 return reject(new Error("Element manquant dans le token"));
@@ -224,7 +224,7 @@ app.post('/login', (req, res) => {
                     exp: Date.now() + (1000 * 60 * 10) // 10 Minutes avant expiration
                 },
                 // Ceci est la clef secrète
-                process.env.SECRET_KEY
+                process.env.SECRET_KEY_AUTH
             );
 
             console.log("JWT Token Créé");
@@ -363,6 +363,11 @@ app.patch('/update', (req, res) => {
     }
 })
 
-app.listen(3000, () => {
-    console.log("Le serveur d'authentification écoute sur le port 3000");
-});
+if (process.env.SECRET_KEY_AUTH) {
+    app.listen(3000, () => {
+        console.log("Le serveur d'authentification écoute sur le port 3000");
+    });
+} else {
+    throw new Error("env : SECRET_KEY_AUTH is required")
+}
+

@@ -12,7 +12,7 @@ const sqlite3 = require('sqlite3').verbose();
 
 app.use(cors({
     credentials: true,
-    origin: ["http://104.155.61.145", `http://${process.env.DN_CLIENT ? process.env.DN_CLIENT : "localhost"}:8080`, "*", "http://localhost:8080"],
+    origin: ["http://104.155.61.145", `http://${process.env.DN_CLIENT}:8080`, "*", "http://localhost:8080"],
 }))
 
 app.use(bodyParser.urlencoded({
@@ -36,9 +36,17 @@ try {
     return;
 }
 
-app.listen(3001, () => {
-    console.log("Serveur démarré sur le port 3001");
-});
+if (process.env.DN_AUTH &&
+    process.env.SECRET_KEY_SESSION &&
+    process.env.DN_AUTH &&
+    process.env.DN_PDF &&
+    process.env.DN_CLIENT) {
+    app.listen(3001, () => {
+        console.log("Serveur démarré sur le port 3001");
+    });
+} else {
+    throw new Error("env is required")
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Authentification
@@ -58,7 +66,7 @@ const auth = async (req, method, action, body, params = "", headers = {}) => {
     let responseJson = {}
     console.log("connection to auth...")
     try {
-        response = await fetch(`http://${process.env.DN_AUTH ? process.env.DN_AUTH : "localhost"}:3000/${action}${params}`, {
+        response = await fetch(`http://${process.env.DN_AUTH}:3000/${action}${params}`, {
             method,
             headers: {
                 "Content-Type": "application/json",
@@ -444,7 +452,7 @@ app.get('/stations', async (req, res) => {
 });
 
 const getId = async (identifier) =>  {
-    const response = await fetch(`http:///${process.env.DN_AUTH ? process.env.DN_AUTH : "localhost"}:3000/compteId?identifiant=${identifier}`, {
+    const response = await fetch(`http:///${process.env.DN_AUTH ? process.env.DN_AUTH : "104.155.61.145"}:3000/compteId?identifiant=${identifier}`, {
         method: 'GET',
         headers: {
             "Content-Type": "application/json",
@@ -507,7 +515,7 @@ app.post('/itinerary', async (req, res) => {
                         });
                     }))
 
-                    fetch(`http:///${process.env.DN_PDF ? process.env.DN_PDF : "localhost"}:3002/itinerary`, {
+                    fetch(`http:///${process.env.DN_PDF}:3002/itinerary`, {
                         method: 'POST',
                         headers: {
                             "Content-Type": "application/json",
@@ -624,7 +632,7 @@ app.get("/itineraries", async (req, res) => {
             previousItineraryId = row.itinerary_id
 
             if (!itinerary.pdf && !itinerary.status && !itinerary.message) {
-                const response = await fetch(`http://${process.env.DN_PDF ? process.env.DN_PDF : "localhost"}:3002/itinerary?id=` + row.itinerary_id, {
+                const response = await fetch(`http://${process.env.DN_PDF}:3002/itinerary?id=` + row.itinerary_id, {
                     method: 'GET',
                     headers: {
                         "Content-Type": "application/json",

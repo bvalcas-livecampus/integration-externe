@@ -216,7 +216,6 @@ app.get('/itinerary', async (req, res) => {
     }
 })
 
-
-const server = app.listen(3002, () => {
+app.listen(3002, () => {
     console.log("Le serveur PDF écoute sur le port 3002");
 });

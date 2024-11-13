@@ -5,11 +5,11 @@ FROM node:20
 WORKDIR /app
 
 # Ajouter les arguments de build pour les variables locales
-ARG SECRET_KEY
+ARG SECRET_KEY_AUTH
 ARG DN_FRONT
 
 # Définir des variables d'environnement
-ENV SECRET_KEY=$SECRET_KEY
+ENV SECRET_KEY_AUTH=$SECRET_KEY_AUTH
 ENV DN_FRONT=$DN_FRONT
 
 # Copier les fichiers package.json et package-lock.json pour installer les dépendances

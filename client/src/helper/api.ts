@@ -29,7 +29,7 @@ const api = async (method: 'POST' | 'GET' | 'PATCH', action: string, body: objec
     }
 
     
-    const response = await fetch(`http://${apiUrl ? apiUrl : "localhost"}:3001/${action}${params}`, payload);
+    const response = await fetch(`http://${apiUrl}:3001/${action}${params}`, payload);
     const responseJson = await response.json();
     if (response.status === 200 || response.status === 201) {
         return responseJson;
